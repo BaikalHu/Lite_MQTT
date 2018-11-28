@@ -2,6 +2,9 @@
 
 #include "atiny.h"
 
+
+
+
 unsigned long int atiny_gettime_ms(void)
 {
 
@@ -15,6 +18,15 @@ void *atiny_malloc(size_t size)
 {
     return malloc(size);
 }
+
+void atiny_buf_init(atiny_buf_t *abuf, size_t size)
+{
+    abuf->size = size;
+    abuf->len = 0;
+	abuf->data = atiny_malloc(size);
+}
+
+
 
 int atiny_parse_address(struct sockaddr_in *addr, char *server_ip, unsigned int server_port)
 {
@@ -82,6 +94,8 @@ atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_han
         nc->user_handler = cb;
         nc->proto_handler = NULL;
         nc->last_time = atiny_gettime_ms();
+		atiny_buf_init(&(nc->send_buf), 1024);
+		atiny_buf_init(&(nc->recv_buf), 1024);
         atiny_parse_address(&(nc->address), param.server_ip, param.server_port);
     }
     m->interface->ifuncs->connect(nc);

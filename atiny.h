@@ -19,6 +19,12 @@
 #define ATINY_FG_CAN_WR (1 << 3)
 #define ATINY_FG_ERR    (1 << 4)
 
+#define ATINY_EV_POLL       1
+#define ATINY_EV_CONNECTED  2
+#define ATINY_EV_SEND       3
+#define ATINY_EV_RECV       4
+#define ATINY_EV_CLOSE      5
+
 
 typedef struct atiny_connection atiny_connection_t;
 typedef struct atiny_if atiny_if_t;
@@ -31,8 +37,8 @@ typedef void (*atiny_event_handler)(atiny_connection_t *nc, int event, void *eve
 typedef struct atiny_buf
 {
     char *data;
-    size_t len;
-    size_t size;
+    size_t len;    //data len
+    size_t size;   //total size
 } atiny_buf_t;
 
 typedef struct atiny_manager
