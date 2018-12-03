@@ -5,7 +5,7 @@
 
 
 
-unsigned long int atiny_gettime_ms(void)
+atiny_time_t atiny_gettime_ms(void)
 {
 
     struct timeval tv;

@@ -18,7 +18,7 @@
 #define ATINY_EV_MQTT_PINGRESP         (ATINY_EV_MQTT_BASE + PINGRESP)
 #define ATINY_EV_MQTT_DISCONNECT       (ATINY_EV_MQTT_BASE + DISCONNECT)
 
-
+#define MAX_MESSAGE_HANDLERS (10)
 
 typedef MQTTPacket_connectData mqtt_pack_con_opt_t;
 
@@ -33,15 +33,48 @@ typedef enum QoS
 
 typedef struct atiny_mqtt_msg
 {
+    unsigned char type;
     QoS_e qos;
+    unsigned int len;
     unsigned char retained;
     unsigned char dup;
     unsigned short id;
     void *payload;
-    size_t playloadlen;
+    size_t payloadlen;
 } atiny_mqtt_msg_t;
 
+typedef struct atiny_mqtt_msg_data
+{
+    atiny_mqtt_msg_t* message;
+    const char* topic;
+} atiny_mqtt_msg_data_t;
+
+typedef struct atiny_mqtt_suback_data
+{
+    QoS_e grantedQoS;
+} atiny_mqtt_suback_data_t;
+
+
+typedef void (*messageHandler)(atiny_mqtt_msg_data_t*);
+
+typedef struct atiny_mqtt_proto_data
+{
+    unsigned short keep_alive;
+    atiny_time_t last_time;
+    unsigned int next_packetid;
+    struct MessageHandlers
+    {
+        const char* topicFilter;
+        messageHandler fp;
+    } messageHandlers[MAX_MESSAGE_HANDLERS];      /* Message handlers are indexed by subscription topic */
+} atiny_mqtt_proto_data_t;
+
+
+
 int atiny_mqtt_connect(atiny_connection_t *nc, mqtt_pack_con_opt_t *options);
+int atiny_mqtt_ping(atiny_connection_t *nc);
+
+void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_data);
 
 
 

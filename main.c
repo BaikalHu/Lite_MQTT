@@ -1,5 +1,7 @@
 #include <pthread.h>
 #include <unistd.h>
+#include <string.h>
+
 #include "atiny_log.h"
 #include "atiny.h"
 #include "atiny_mqtt.h"
@@ -10,7 +12,7 @@ extern atiny_if_funcs_t linux_sock;
 void ev_handler(atiny_connection_t *nc, int event, void *event_data)
 {
     printf("ev_handler in main\n");
-	char buf[36] = {0x10, 0x22, 0x00, 0x06,0x4d, 0x51, 0x49,0x73, 0x64,0x70,0x03,0x02,0x00,0x3c, 0x00, 0x14,0x6d,0x6f,0x73,0x71,0x70,0x75,0x62,0x2f,0x32,0x31,0x37,0x38,0x32,0x2d,0x75,0x62,0x75,0x6e,0x74,0x75};
+	atiny_mqtt_msg_t *amm = (atiny_mqtt_msg_t *)event_data;
     switch(event)
     {
         case ATINY_EV_CONNECTED:
@@ -21,11 +23,25 @@ void ev_handler(atiny_connection_t *nc, int event, void *event_data)
             options.MQTTVersion = 4;
             options.keepAliveInterval = 60;
             options.willFlag = 0;
-			//nc->mgr->interface->ifuncs->send(nc, buf, 36);
+			nc->proto_handler = atiny_mqtt_event_handler;
+			nc->proto_data = atiny_malloc(sizeof(atiny_mqtt_proto_data_t));
 		    atiny_mqtt_connect(nc, &options);
-			//sleep(60);
             break;
         case ATINY_EV_MQTT_CONNACK:
+			printf("connect succuss~~~~~~~\n");
+			atiny_mqtt_msg_t msg;
+		    msg.dup = 0;
+			msg.id = 0x1000;
+			msg.qos = 1;
+			msg.retained = 0;
+			msg.payload = "hello";
+			msg.payloadlen = 5;
+			atiny_mqtt_publish(nc,"abc",&msg);
+			atiny_mqtt_subscribe(nc,"sub",1);
+			atiny_mqtt_subscribe(nc,"sub1",1);
+            break;
+		case ATINY_EV_MQTT_PUBLISH:
+            printf("recv pushlish %s\n", amm->payload);
             break;
         default:
             break;

@@ -25,6 +25,7 @@
 #define ATINY_EV_RECV       4
 #define ATINY_EV_CLOSE      5
 
+typedef unsigned long int atiny_time_t;
 
 typedef struct atiny_connection atiny_connection_t;
 typedef struct atiny_if atiny_if_t;
@@ -55,9 +56,11 @@ typedef struct atiny_connection
     struct sockaddr_in address;
     atiny_buf_t recv_buf;
     atiny_buf_t send_buf;
-    time_t last_time;
+    atiny_time_t last_time;
     atiny_event_handler user_handler;
     atiny_event_handler proto_handler;
+    void *user_data;
+    void *proto_data;
 #ifdef WITH_DTLS
     void *ssl_handler;
 #endif
@@ -75,8 +78,8 @@ typedef struct atiny_if_funcs
     void (*uninit)(atiny_if_t *interface);
     void (*connect)(atiny_connection_t *nc);
     void (*discon)(atiny_connection_t *nc);
-    time_t (*poll)(atiny_if_t *interface, int timeout_ms);
-    int (*send)(atiny_connection_t *nc, void *buf, size_t len);
+    atiny_time_t (*poll)(atiny_if_t *interface, int timeout_ms);
+    int (*send)(atiny_connection_t *nc, const void *buf, size_t len);
     int (*recv)(atiny_connection_t *nc, void *buf, size_t len);
 } atiny_if_funcs_t;
 
@@ -102,5 +105,8 @@ int atiny_init(atiny_manager_t *m,  atiny_device_info_t *param);
 atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb);
 atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param);
 void atiny_poll(atiny_manager_t *m, int timeout_ms);
+
+
+unsigned long int atiny_gettime_ms(void);
 
 
