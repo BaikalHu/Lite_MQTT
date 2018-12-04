@@ -206,5 +206,4 @@ int atiny_mqtt_subscribe(atiny_connection_t *nc, const char *topics, QoS_e qos)
     data->last_time = atiny_gettime_ms();
 
     return len;
-
 }

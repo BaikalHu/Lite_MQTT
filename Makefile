@@ -34,6 +34,7 @@ PROJECTBASE = $(PWD)
 override PROJECTBASE    := $(abspath $(PROJECTBASE))
 TOP_DIR = $(PROJECTBASE)
 SRC = $(TOP_DIR)/src
+INC = $(TOP_DIR)/include
 
 
 #######################################
@@ -50,7 +51,7 @@ BUILD_DIR = build
 ######################################
 # C sources
 
-WITH_DTLS := yes
+WITH_DTLS := no
 
 # macros for gcc
 # AS defines
@@ -63,6 +64,7 @@ C_DEFS :=  \
 
 ifeq ($(WITH_DTLS), yes)
 C_DEFS +=  \
+        -D DEBUG \
         -D USE_MBED_TLS \
         -D WITH_DTLS  \
         -D MBEDTLS_DEBUG_C \
@@ -163,6 +165,10 @@ ATINY_LOG_INC = \
 ATINY_INC = \
         -I $(SRC)/atiny
         C_INCLUDES += $(ATINY_INC)
+
+ATINY_DBG_INC = \
+        -I $(INC)
+        C_INCLUDES += $(ATINY_DBG_INC)
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

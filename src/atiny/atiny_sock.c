@@ -4,6 +4,42 @@
 #include "atiny_mbed_ssl.h"
 #endif
 
+int atiny_parse_address(struct sockaddr_in *addr, char *server_ip, unsigned int server_port)
+{
+    int rc = -1;
+    struct addrinfo *result = NULL;
+    struct addrinfo hints = {0, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
+
+    if ((rc = getaddrinfo(server_ip, NULL, &hints, &result)) == 0)
+    {
+        struct addrinfo *res = result;
+
+        while (res)
+        {
+            if (res->ai_family == AF_INET)
+            {
+                result = res;
+                break;
+            }
+            res = res->ai_next;
+        }
+
+        if (result->ai_family == AF_INET)
+        {
+            addr->sin_port = htons((unsigned short)server_port);
+            addr->sin_family = AF_INET;
+            addr->sin_addr = ((struct sockaddr_in *)(result->ai_addr))->sin_addr;
+        }
+        else
+            rc = -1;
+
+        freeaddrinfo(result);
+    }
+
+    return rc;
+}
+
+
 void atiny_dispatch_event(atiny_connection_t *nc, atiny_event_handler event_handler, void *user_data, int event, void *event_data)
 {
     if(event_handler == NULL)
@@ -153,23 +189,28 @@ void atiny_sock_uninit(atiny_if_t *interface)
 void atiny_sock_connect(atiny_connection_t *nc)
 {
     int rc = 0;
+
     nc->sock_fd = socket(AF_INET, SOCK_STREAM, 0);
-    printf("sock fd:%d\n", nc->sock_fd);
     if (nc->sock_fd == -1) {
-      ATINY_LOG(LOG_ERR, "socket error");
-      return;
+        ATINY_LOG(LOG_ERR, "socket error");
+        return;
     }
 
     rc = connect(nc->sock_fd, (struct sockaddr *)&nc->address, sizeof(nc->address));
-    printf("connect rc:%d\n", rc);
     if(rc < 0)
-      ATINY_LOG(LOG_ERR, "sock %d rc %d ",  nc->sock_fd, rc);
+        ATINY_LOG(LOG_ERR, "sock %d rc %d ",  nc->sock_fd, rc);
 }
 
 void atiny_sock_discon(atiny_connection_t *nc)
 {
+    int rc = 0;
 
+    if(nc->sock_fd == -1)
+        return;
 
+    rc = close(nc->sock_fd);
+    if(rc < 0)
+        ATINY_LOG(LOG_ERR, "sock %d rc %d ",  nc->sock_fd, rc);
 }
 
 
@@ -219,9 +260,8 @@ atiny_time_t atiny_sock_poll(atiny_if_t *interface, int timeout_ms)
 int atiny_sock_send(atiny_connection_t *nc, const void *buf, size_t len)
 {
     int rc;
-    //printf("sock send len:%d\n", len);
+
     rc = send(nc->sock_fd, buf, len, 0);
-    //printf("rc:%d\n",rc);
 
     return rc;
 }
