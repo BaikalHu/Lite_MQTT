@@ -50,14 +50,37 @@ BUILD_DIR = build
 ######################################
 # C sources
 
+WITH_DTLS := yes
 
-ifdef ($(WITH_DTLS))
+# macros for gcc
+# AS defines
+AS_DEFS =
+
+# C defines
+C_DEFS :=  \
+        -D ATINY_DEBUG
+
+
+ifeq ($(WITH_DTLS), yes)
+C_DEFS +=  \
+        -D USE_MBED_TLS \
+        -D WITH_DTLS  \
+        -D MBEDTLS_DEBUG_C \
+        -D MBEDTLS_CONFIG_FILE=\"atiny_mbedtls_config_x509.h\" \
+        -D LWIP_TIMEVAL_PRIVATE=0
+
+        #-D MBEDTLS_DEBUG_C \
+
+endif
+
+
+ifeq ($(WITH_DTLS), yes)
 MBEDTLS_SRC = \
         ${wildcard $(SRC)/mbedtls/mbedtls-2.6.0/library/*.c}
         C_SOURCES += $(MBEDTLS_SRC)
 
 MBEDTLS_PORT_SRC = \
-        ${wildcard $(SRC)/mbedtls/mbedtls_port/*.c}
+        ${wildcard $(SRC)/atiny_mbed_ssl/*.c}
         C_SOURCES += $(MBEDTLS_PORT_SRC)
 endif
 
@@ -109,37 +132,21 @@ PERIFLIB_SOURCES =
 # float-abi
 # mcu
 
-# macros for gcc
-# AS defines
-AS_DEFS =
-
-# C defines
-#C_DEFS =  \
-        -D WITH_LINUX \
-        -D LWM2M_LITTLE_ENDIAN \
-        -D LWM2M_CLIENT_MODE \
-        -D ATINY_DEBUG \
-        -D USE_MBED_TLS \
-        -D WITH_DTLS  \
-        -D WITH_CA \
-        -D MBEDTLS_CONFIG_FILE=\"los_mbedtls_config_x509.h\" \
-        -D LWIP_TIMEVAL_PRIVATE=0
-
-        #-D MBEDTLS_DEBUG_C \
 
 # AS includes
 AS_INCLUDES =
 
 # C includes
-
+ifeq ($(WITH_DTLS), yes)
 MBEDTLS_INC = \
         -I $(SRC)/mbedtls/mbedtls-2.6.0/include \
         -I $(SRC)/mbedtls/mbedtls-2.6.0/include/mbedtls
         C_INCLUDES += $(MBEDTLS_INC)
 
 MBEDTLS_PORT_INC = \
-        -I $(SRC)/mbedtls/mbedtls_port
+        -I $(SRC)/atiny_mbed_ssl
         C_INCLUDES += $(MBEDTLS_PORT_INC)
+endif
 
 MQTT_PACKET_INC = \
         -I $(SRC)/mqtt_packet

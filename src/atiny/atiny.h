@@ -1,3 +1,6 @@
+#ifndef __ATINY_H__
+#define __ATINY_H__
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -10,7 +13,9 @@
 #include <netdb.h>
 #include <errno.h>
 
-
+//#ifdef WITH_DTLS
+//#include "atiny_mbed_ssl.h"
+//#endif
 
 #define ATINY_FG_UDP (1 << 0)
 #define ATINY_FG_CONNECTING (1 << 1)
@@ -90,6 +95,33 @@ typedef struct atiny_device_info
     atiny_if_funcs_t *ifuncs;
 } atiny_device_info_t;
 
+typedef struct atiny_ssl_psk
+{
+    const unsigned char *psk_id;
+    size_t psk_id_len;
+    const unsigned char *psk;
+    size_t psk_len;
+} atiny_ssl_psk_t;
+
+
+typedef struct atiny_ssl_ca
+{
+    const unsigned char *server_name;
+    const unsigned char *ca_cert;
+    size_t ca_cert_len;
+    const unsigned char *client_cert;
+    size_t client_cert_len;
+    const unsigned char *client_key;
+    size_t client_key_len;
+} atiny_ssl_ca_t;
+
+typedef union atiny_ssl_param
+{
+    atiny_ssl_psk_t psk;
+    atiny_ssl_ca_t ca;
+} atiny_ssl_param_u;
+
+
 typedef struct atiny_connect_param
 {
     int proto_type;
@@ -98,10 +130,7 @@ typedef struct atiny_connect_param
 //    atiny_if_funcs_t *ifuncs;
 #ifdef WITH_DTLS
     // add some param used in dtls, like ca, key etc.
-    const char *ca_cert;
-    const char *client_cert;
-    const char *client_key;
-    const char *server_name;
+	atiny_ssl_param_u ssl_param;
 #endif
 } atiny_connect_param_t;
 
@@ -113,4 +142,4 @@ void atiny_poll(atiny_manager_t *m, int timeout_ms);
 
 unsigned long int atiny_gettime_ms(void);
 
-
+#endif

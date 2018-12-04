@@ -85,6 +85,11 @@ atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_han
 		atiny_buf_init(&(nc->recv_buf), 1024);
         atiny_parse_address(&(nc->address), param.server_ip, param.server_port);
     }
+
+#ifdef WITH_DTLS
+    atiny_ssl_init(nc, &param.ssl_param);
+#endif
+
     m->interface->ifuncs->connect(nc);
     return nc;
 }

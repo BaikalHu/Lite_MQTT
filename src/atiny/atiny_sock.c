@@ -1,5 +1,8 @@
 #include "atiny.h"
 #include "atiny_log.h"
+#ifdef WITH_DTLS
+#include "atiny_mbed_ssl.h"
+#endif
 
 void atiny_dispatch_event(atiny_connection_t *nc, atiny_event_handler event_handler, void *user_data, int event, void *event_data)
 {
@@ -18,6 +21,12 @@ void atiny_nc_connect_cb(atiny_connection_t *nc)
 {
     ATINY_LOG(LOG_DEBUG, "atiny_nc_connect_cb");
     nc->flags &= ~ATINY_FG_CONNECTING;
+#if WITH_DTLS
+//if (err == 0 && (nc->flags & MG_F_SSL)) {
+    atiny_ssl_handshake(nc);
+//  } else
+#endif
+
     atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_CONNECTED,NULL);
 }
 
@@ -29,10 +38,23 @@ void atiny_nc_can_write_cb(atiny_connection_t *nc)
     ATINY_LOG(LOG_DEBUG, "atiny_nc_can_write_cb len:%d", (int)len);
 
     nc->flags &= ~ATINY_FG_CAN_WR;
+#if WITH_DTLS
+    if(len > 0)	  rc = mbedtls_ssl_write(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl, (unsigned char *) buf, len);
 
+    if (rc == MBEDTLS_ERR_SSL_WANT_WRITE)
+    {
+        return 0;
+    }
+    else if (rc < 0)
+    {
+        return -1;
+    }
+#else
     if(len > 0)
         rc = nc->mgr->interface->ifuncs->send(nc, buf, len);
-	
+#endif
+
+
     if(rc < 0)
     {
         printf("write error\n");
@@ -56,8 +78,22 @@ void atiny_nc_can_read_cb(atiny_connection_t *nc)
     nc->flags &= ~ATINY_FG_CAN_RD;
 
     ATINY_LOG(LOG_DEBUG, "atiny_nc_can_read_cb len:%d", len);
+
+#if WITH_DTLS
+    if(len > 0)  rc = mbedtls_ssl_read(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl, (unsigned char *) buf, len);
+
+    if (rc == MBEDTLS_ERR_SSL_WANT_READ)
+    {
+        return 0;
+    }
+    else if (rc < 0)
+    {
+        return -1;
+    }
+#else
     if(len > 0)
         rc = nc->mgr->interface->ifuncs->recv(nc, buf, len);
+#endif
 
     if(rc< 0)
     {

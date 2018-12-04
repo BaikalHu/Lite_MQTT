@@ -13,10 +13,10 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
 {
     MQTTHeader header = {0};
 
-    unsigned char i;
-	unsigned int index = 1;
+    unsigned char i = 0;
+    unsigned int index = 1;
     int len = 0;
-	const char *p, *end;
+    const char *p, *end;
     int rem_len = 0;
     int multiplier = 1;
     const int MAX_NO_OF_REMAINING_LENGTH_BYTES = 4;
@@ -25,14 +25,14 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
 
 
     if(io->len < 2) return MQTTPACKET_BUFFER_TOO_SHORT;
-	p = io->data + 1;
+    p = io->data + 1;
     while ((size_t)(p - io->data) < io->len)
     {
-	  i = *((const unsigned char *) p++);
-	  rem_len += (i & 0x7f) << 7 * len;
-	  len++;
-	  if (!(i & 0x80)) break;
-	  if (len > MAX_NO_OF_REMAINING_LENGTH_BYTES) return MQTTPACKET_READ_ERROR;
+        i = *((const unsigned char *) p++);
+        rem_len += (i & 0x7f) << 7 * len;
+        len++;
+        if (!(i & 0x80)) break;
+        if (len > MAX_NO_OF_REMAINING_LENGTH_BYTES) return MQTTPACKET_READ_ERROR;
     }
 
     end = p + rem_len;
