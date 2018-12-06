@@ -48,6 +48,7 @@ typedef struct mqtt_fix_head
 #define MQTT_PROTO_LEVEL         (4)
 
 #define MQTT_STRING_LEN          (2)
+#define MQTT_DATA_LEN            (2)
 #define MQTT_QOS_LEN             (1)
 
 #define MQTT_CONNECT_HEAD_INIT               \
@@ -94,12 +95,14 @@ typedef struct mqtt_connect_opt
 typedef struct mqtt_publish_head
 {
     char *topic;
+	unsigned short topic_len;
 	unsigned short packet_id;
 } mqtt_publish_head_t;
 
 typedef struct mqtt_publish_payload
 {
     char *msg;
+	size_t msg_len;
 } mqtt_publish_payload_t;
 
 
@@ -145,6 +148,13 @@ int mqtt_encode_connect(unsigned char *buf, int buf_len, mqtt_connect_opt_t *opt
 
 int mqtt_encode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *options);
 int mqtt_encode_subscribe(unsigned char *buf, int buf_len, mqtt_subscribe_opt_t *options);
+
+int mqtt_encode_ping(unsigned char *buf, int buf_len);
+
+
+int mqtt_decode_fixhead(unsigned char *buf, unsigned char *type, unsigned char *dup, 
+                                unsigned char *qos, unsigned char *retain, int *remaining_len);
+
 
 int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *options);
 

@@ -19,6 +19,28 @@ static int mqtt_encode_len(unsigned char *buf, int len)
     return rc;
 }
 
+static int mqtt_decode_len(unsigned char *buf, int *len)
+{
+    int rc = 0;
+    int mul = 1;
+    unsigned char byte;
+
+    *len = 0;
+    do
+    {
+        byte = *(buf++);
+        *len += (byte & ~MQTT_PACKET_LEN_MASK) * mul;
+        if (mul > (MQTT_PACKET_LEN_MASK * MQTT_PACKET_LEN_MASK * MQTT_PACKET_LEN_MASK))
+        {
+            return -1;
+        }
+        mul *= MQTT_PACKET_LEN_MASK;
+        rc++;
+    } while ((byte & MQTT_PACKET_LEN_MASK) != 0);
+
+    return rc;
+}
+
 static int mqtt_encode_num(unsigned char *buf, unsigned short num)
 {
     if(buf)
@@ -27,7 +49,18 @@ static int mqtt_encode_num(unsigned char *buf, unsigned short num)
         buf[1] = num & 0xFF;
     }
     
-    return MQTT_STRING_LEN;
+    return MQTT_DATA_LEN;
+}
+
+static int mqtt_decode_num(unsigned char *buf, unsigned short *num)
+{
+    if(buf)
+    {
+        *num = (buf[0] << 8) + buf[1];
+		printf("%x %x %d\n", buf[0], buf[1], *num);
+    }
+
+	return MQTT_DATA_LEN;
 }
 
 static int mqtt_encode_string(unsigned char *buf, const unsigned char *str)
@@ -42,11 +75,21 @@ static int mqtt_encode_string(unsigned char *buf, const unsigned char *str)
     return  (len + str_len);
 }
 
+static int mqtt_decode_string(unsigned char *buf, unsigned char **str, unsigned short *num)
+{
+	int len = 0;
 
-int mqtt_encode_fixhead(unsigned char *buf, unsigned char type, unsigned char dup, 
+	len = mqtt_decode_num(buf, num);
+	*str = buf + len;
+    printf("~~~:%d\n", *num);
+	return (len + *num);
+}
+
+
+int mqtt_encode_fixhead(unsigned char *buf, unsigned char type, unsigned char dup,
                                 unsigned char qos, unsigned char retain, int remaining_len)
 {
-    int len = 0;
+    int len = 1;
 
     mqtt_fix_head_t *head = (mqtt_fix_head_t *)buf;
 
@@ -54,9 +97,25 @@ int mqtt_encode_fixhead(unsigned char *buf, unsigned char type, unsigned char du
 	head->mqtt_first_byte_u.bits.dup = dup;
 	head->mqtt_first_byte_u.bits.qos = qos;
     head->mqtt_first_byte_u.bits.retain = retain;
-    len = mqtt_encode_len( head->remaining_len, remaining_len);
+    len += mqtt_encode_len( head->remaining_len, remaining_len);
 
-	return (len+1);
+	return len;
+}
+
+int mqtt_decode_fixhead(unsigned char *buf, unsigned char *type, unsigned char *dup,
+								unsigned char *qos, unsigned char *retain, int *remaining_len)
+{
+    int len = 1;
+
+	mqtt_fix_head_t *head = (mqtt_fix_head_t *)buf;
+
+	*type = head->mqtt_first_byte_u.bits.type;
+	*dup = head->mqtt_first_byte_u.bits.dup;
+	*qos = head->mqtt_first_byte_u.bits.qos;
+	*retain = head->mqtt_first_byte_u.bits.retain;
+    len += mqtt_decode_len(head->remaining_len, remaining_len);
+
+	return len;
 }
 
 int mqtt_encode_connect(unsigned char *buf, int buf_len, mqtt_connect_opt_t *options)
@@ -150,6 +209,34 @@ int mqtt_encode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *opt
 	return (len + remaining_len);
 }
 
+int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *options)
+{
+    int len = 0, remaning_len = 0;
+    int type = 0;
+	unsigned char *vhead_buf;
+	unsigned char *payload_buf;
+	len = mqtt_decode_fixhead(buf, &type, &options->dup, &options->qos, &options->retain, &remaning_len);
+    if(type != MQTT_PACKET_TYPE_PUBLISH)
+    {
+        printf("decode pulish error\n");
+		return -1;
+	}
+printf("d1 len:%d\n",len);
+    vhead_buf = buf + len;
+    vhead_buf += mqtt_decode_string(vhead_buf, &options->publish_head.topic, &options->publish_head.topic_len);
+	printf("d1.1 %d\n", options->publish_head.topic_len);
+	if(options->qos > 0)
+	    vhead_buf += mqtt_decode_num(vhead_buf, &options->publish_head.packet_id);
+	printf("d2\n");
+
+	payload_buf = vhead_buf;
+	options->publish_payload.msg = payload_buf;
+	printf("%d %d\n", remaning_len, options->publish_head.topic_len);
+    options->publish_payload.msg_len = remaning_len - options->publish_head.topic_len - MQTT_STRING_LEN;
+
+}
+
+
 int mqtt_encode_subscribe(unsigned char *buf, int buf_len, mqtt_subscribe_opt_t *options)
 {
     int len = 0;
@@ -184,10 +271,13 @@ int mqtt_encode_subscribe(unsigned char *buf, int buf_len, mqtt_subscribe_opt_t 
     return (len + remaining_len);
 }
 
-int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *options)
+int mqtt_encode_ping(unsigned char *buf, int buf_len)
 {
+    int len = 0;
+    len = mqtt_encode_fixhead(buf, MQTT_PACKET_TYPE_PINGREQ, 0, 0, 0, 0);
 
-
-
+	return len;
 }
+
+
 

@@ -11,46 +11,29 @@ static int getNextPacketId(atiny_connection_t *nc)
 
 int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
 {
-    MQTTHeader header = {0};
-
     unsigned char i = 0;
     unsigned int index = 1;
     int len = 0;
-    const char *p, *end;
+    const char *p;
     int rem_len = 0;
     int multiplier = 1;
     const int MAX_NO_OF_REMAINING_LENGTH_BYTES = 4;
 
-    header.byte = io->data[0];
+	len = mqtt_decode_fixhead(io->data, &amm->type, &amm->dup, &amm->qos, &amm->retained, &rem_len);
 
     if(io->len < 2) return MQTTPACKET_BUFFER_TOO_SHORT;
-    p = io->data + 1;
-    while ((size_t)(p - io->data) < io->len)
-    {
-        i = *((const unsigned char *) p++);
-        rem_len += (i & 0x7f) << 7 * len;
-        len++;
-        if (!(i & 0x80)) break;
-        if (len > MAX_NO_OF_REMAINING_LENGTH_BYTES) return MQTTPACKET_READ_ERROR;
-    }
+    p = io->data + len;
 
-    end = p + rem_len;
-    if(i & 0x80 || rem_len > (io->len - (p - io->data)))
-    {
-        return MQTTPACKET_READ_ERROR;
-    }
 
-    amm->type = header.bits.type;
-    amm->qos = header.bits.qos;
 
     switch(amm->type)
     {
-        case PINGRESP:
+        case MQTT_PACKET_TYPE_PINGREQ:
             break;
-        case CONNACK:
-        case PUBACK:
+        case MQTT_PACKET_TYPE_CONNACK:
+        case MQTT_PACKET_TYPE_PUBACK:
             break;
-        case SUBACK:
+        case MQTT_PACKET_TYPE_SUBACK:
             {
                 atiny_mqtt_suback_data_t data;
                 data.grantedQoS= QOS0;
@@ -64,53 +47,33 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
                 }
             }
             break;
-        case UNSUBACK:
+        case MQTT_PACKET_TYPE_UNSUBACK:
             break;
-        case PUBLISH:
+        case MQTT_PACKET_TYPE_PUBLISH:
             {
-                MQTTString topicName;
-                int intQoS;
-                amm->payloadlen = 0; /* this is a size_t, but deserialize publish sets this as int */
-                if (MQTTDeserialize_publish(&amm->dup, &intQoS, &amm->retained, &amm->id, &topicName,
-                                        (unsigned char **)&amm->payload, (int *)&amm->payloadlen, io->data, rem_len) != 1)
-                {
-                    printf("deserialize pulish failed\n");
-                }
-                amm->qos = (enum QoS)intQoS;
-    									/*
-                deliverMessage(c, &topicName, &msg);
-                if (msg.qos != QOS0)
-                {
-                    if (msg.qos == QOS1)
-                    len = MQTTSerialize_ack(c->buf, c->buf_size, PUBACK, 0, msg.id);
-                else if (msg.qos == QOS2)
-                    len = MQTTSerialize_ack(c->buf, c->buf_size, PUBREC, 0, msg.id);
-                if (len <= 0)
-                    rc = FAILURE;
-                else
-                {
-                    TimerInit(&send_timer);
-                    TimerCountdownMS(&send_timer, 1000);
-                    rc = sendPacket(c, len, &send_timer);
-                }
-                if (rc == FAILURE)
-                    goto exit; // there was a problem
-                    */
+                mqtt_publish_opt_t options;
+
+				mqtt_decode_publish(io->data, len, &options);
+				amm->payloadlen = options.publish_payload.msg_len;
+				printf("load len:%d\n", amm->payloadlen);
+				amm->payload = options.publish_payload.msg;
             }
             break;
     }
 
-    amm->len = end - io->data;
+    amm->len = len + rem_len;
+	printf("real len:%d\n", amm->len);
     return amm->len;
 }
 
 void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_data)
 {
     int len;
-    atiny_mqtt_msg_t amm;
+    atiny_mqtt_msg_t amm = {0};
     atiny_mqtt_proto_data_t *data = (atiny_mqtt_proto_data_t *)nc->proto_data;
     atiny_time_t now;
     atiny_buf_t *io = &nc->recv_buf;
+	nc->user_handler(nc, event, event_data);
     switch(event)
     {
         case ATINY_EV_RECV:
@@ -124,6 +87,7 @@ void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_dat
                 }
                 nc->user_handler(nc, ATINY_EV_MQTT_BASE + amm.type, &amm);
                 memmove(nc->recv_buf.data, nc->recv_buf.data + len, nc->recv_buf.len - len);
+				printf("len~~~%d\n",len);
                 nc->recv_buf.len -= len;
             }
             break;
@@ -169,7 +133,7 @@ int atiny_mqtt_ping(atiny_connection_t *nc)
     int len = 0;
     atiny_mqtt_proto_data_t *data;
     data = (atiny_mqtt_proto_data_t *)nc->proto_data;
-    len = MQTTSerialize_pingreq((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len));
+    len = mqtt_encode_ping((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len));
     if(len > 0)
         nc->send_buf.len += len;
     data->last_time = atiny_gettime_ms();
