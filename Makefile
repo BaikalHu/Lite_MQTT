@@ -95,10 +95,6 @@ MQTT_PACKET_SRC = \
         ${wildcard $(SRC)/mqtt_packet/*.c}
         C_SOURCES += $(MQTT_PACKET_SRC)
 
-MQTT_PACKETS_SRC = \
-        ${wildcard $(SRC)/mqtt_packets/*.c}
-        C_SOURCES += $(MQTT_PACKETS_SRC)
-
 MQTT_SRC = \
         ${wildcard $(SRC)/atiny_mqtt/*.c}
         C_SOURCES += $(MQTT_SRC)
@@ -158,9 +154,6 @@ MQTT_PACKET_INC = \
         -I $(SRC)/mqtt_packet
         C_INCLUDES += $(MQTT_PACKET_INC)
 
-MQTT_PACKETS_INC = \
-        -I $(SRC)/mqtt_packets
-        C_INCLUDES += $(MQTT_PACKETS_INC)
 
 MQTT_INC = \
         -I $(SRC)/atiny_mqtt

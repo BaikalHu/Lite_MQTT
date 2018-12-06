@@ -34,6 +34,7 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
         case MQTT_PACKET_TYPE_PUBACK:
             break;
         case MQTT_PACKET_TYPE_SUBACK:
+			/*
             {
                 atiny_mqtt_suback_data_t data;
                 data.grantedQoS= QOS0;
@@ -46,6 +47,7 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
                     //rc = MQTTSetMessageHandler(c, topicFilter, messageHandler);
                 }
             }
+            */
             break;
         case MQTT_PACKET_TYPE_UNSUBACK:
             break;

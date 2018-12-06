@@ -7,6 +7,14 @@
 #define MQTT_PACKET_MAX_LEN     (4)
 
 
+enum errors
+{
+	MQTTPACKET_BUFFER_TOO_SHORT = -2,
+	MQTTPACKET_READ_ERROR = -1,
+	MQTTPACKET_READ_COMPLETE
+};
+
+
 typedef enum mqtt_packet_type
 {
     MQTT_PACKET_TYPE_RESERVED    = 0,

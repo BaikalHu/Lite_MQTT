@@ -57,7 +57,6 @@ static int mqtt_decode_num(unsigned char *buf, unsigned short *num)
     if(buf)
     {
         *num = (buf[0] << 8) + buf[1];
-		printf("%x %x %d\n", buf[0], buf[1], *num);
     }
 
 	return MQTT_DATA_LEN;
@@ -81,7 +80,6 @@ static int mqtt_decode_string(unsigned char *buf, unsigned char **str, unsigned 
 
 	len = mqtt_decode_num(buf, num);
 	*str = buf + len;
-    printf("~~~:%d\n", *num);
 	return (len + *num);
 }
 
@@ -221,17 +219,15 @@ int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *opt
         printf("decode pulish error\n");
 		return -1;
 	}
-printf("d1 len:%d\n",len);
+
     vhead_buf = buf + len;
     vhead_buf += mqtt_decode_string(vhead_buf, &options->publish_head.topic, &options->publish_head.topic_len);
-	printf("d1.1 %d\n", options->publish_head.topic_len);
+
 	if(options->qos > 0)
 	    vhead_buf += mqtt_decode_num(vhead_buf, &options->publish_head.packet_id);
-	printf("d2\n");
 
 	payload_buf = vhead_buf;
 	options->publish_payload.msg = payload_buf;
-	printf("%d %d\n", remaning_len, options->publish_head.topic_len);
     options->publish_payload.msg_len = remaning_len - options->publish_head.topic_len - MQTT_STRING_LEN;
 
 }
@@ -264,7 +260,6 @@ int mqtt_encode_subscribe(unsigned char *buf, int buf_len, mqtt_subscribe_opt_t 
     {
         payload_buf += mqtt_encode_string(payload_buf, options->subscribe_payload.topic[i]);
 		*payload_buf = options->subscribe_payload.qoss[i];
-		//printf("p%d\n", *payload_buf);
 		payload_buf += 1;
 	}
 
