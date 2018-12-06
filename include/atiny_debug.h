@@ -14,7 +14,7 @@
         {                                                              \
             printf("[%s]:[%d]----[%s]\n", __FILE__, __LINE__, msg);    \
         } while(0);                                                    \
-    assert(exp);
+    assert(exp);                                                       \
     }
 #else
 #define ATINY_ASSERT(exp, msg)

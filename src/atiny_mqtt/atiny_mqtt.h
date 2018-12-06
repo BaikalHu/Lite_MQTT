@@ -2,6 +2,8 @@
 
 #include "MQTTConnect.h"
 
+#include "mqtt_packet.h"
+
 #define ATINY_EV_MQTT_BASE    0x1000
 #define ATINY_EV_MQTT_CONNECT          (ATINY_EV_MQTT_BASE + CONNECT)
 #define ATINY_EV_MQTT_CONNACK          (ATINY_EV_MQTT_BASE + CONNACK)
@@ -20,7 +22,8 @@
 
 #define MAX_MESSAGE_HANDLERS (10)
 
-typedef MQTTPacket_connectData mqtt_pack_con_opt_t;
+//typedef MQTTPacket_connectData mqtt_pack_con_opt_t;
+
 
 #define MAX_PACKET_ID 0xFFFF
 
@@ -71,7 +74,9 @@ typedef struct atiny_mqtt_proto_data
 
 
 
-int atiny_mqtt_connect(atiny_connection_t *nc, mqtt_pack_con_opt_t *options);
+int atiny_mqtt_connect(atiny_connection_t *nc, mqtt_connect_opt_t *options);
+int atiny_mqtt_publish(atiny_connection_t *nc, mqtt_publish_opt_t *options);
+
 int atiny_mqtt_ping(atiny_connection_t *nc);
 
 void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_data);

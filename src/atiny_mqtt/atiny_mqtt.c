@@ -23,7 +23,6 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
 
     header.byte = io->data[0];
 
-
     if(io->len < 2) return MQTTPACKET_BUFFER_TOO_SHORT;
     p = io->data + 1;
     while ((size_t)(p - io->data) < io->len)
@@ -140,26 +139,29 @@ void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_dat
     }
 }
 
-int atiny_mqtt_connect(atiny_connection_t *nc, mqtt_pack_con_opt_t *options)
+int atiny_mqtt_connect(atiny_connection_t *nc, mqtt_connect_opt_t *options)
 {
     int rc = -1;
     atiny_mqtt_proto_data_t *data;
-    mqtt_pack_con_opt_t default_options = MQTTPacket_connectData_initializer;
+    mqtt_connect_opt_t default_options = (mqtt_connect_opt_t)MQTT_CONNECT_OPT_INIT;
     int len = 0;
 
     if (options == NULL)
         options = &default_options; /* set default options if none were supplied */
 
     data = (atiny_mqtt_proto_data_t *)nc->proto_data;
-    data->keep_alive = options->keepAliveInterval;
+    data->keep_alive = options->connect_head.keep_alive;
     data->next_packetid = 1;
 
-    if((len = MQTTSerialize_connect((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options)) <= 0)
-        printf("ser connect error\n");
+    if((len = mqtt_encode_connect((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options)) <= 0)
+    {
+        printf("mqtt connect error\n");
+		return rc;
+    }
     nc->send_buf.len += len;
     data->last_time = atiny_gettime_ms();
 
-    return rc;
+    return 0;
 }
 
 int atiny_mqtt_ping(atiny_connection_t *nc)
@@ -175,16 +177,16 @@ int atiny_mqtt_ping(atiny_connection_t *nc)
     return len;
 }
 
-int atiny_mqtt_publish(atiny_connection_t *nc, const char *topic_string, atiny_mqtt_msg_t *msg)
+int atiny_mqtt_publish(atiny_connection_t *nc, mqtt_publish_opt_t *options)
 {
     int len = 0;
 
-    MQTTString topic = MQTTString_initializer;
-    topic.cstring = (char *)topic_string;
     atiny_mqtt_proto_data_t *data;
     data = (atiny_mqtt_proto_data_t *)nc->proto_data;
-    len = MQTTSerialize_publish((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), 0, msg->qos, msg->retained, msg->id,
-                                topic, (unsigned char *)msg->payload, (int)msg->payloadlen);
+
+	if(options->qos)
+		options->publish_head.packet_id = getNextPacketId(nc);
+    len = mqtt_encode_publish((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options);
     if(len > 0)
         nc->send_buf.len += len;
     data->last_time = atiny_gettime_ms();
@@ -192,15 +194,14 @@ int atiny_mqtt_publish(atiny_connection_t *nc, const char *topic_string, atiny_m
     return len;
 }
 
-int atiny_mqtt_subscribe(atiny_connection_t *nc, const char *topics, QoS_e qos)
+int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options)
 {
     int len = 0;
-    MQTTString topic = MQTTString_initializer;
-    topic.cstring = (char *)topics;
     atiny_mqtt_proto_data_t *data;
     data = (atiny_mqtt_proto_data_t *)nc->proto_data;
+	options->subscribe_head.packet_id = getNextPacketId(nc);
 
-    len = MQTTSerialize_subscribe((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), 0, getNextPacketId(nc), 1, &topic, (int *)&qos);
+    len = mqtt_encode_subscribe((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options);
     if(len > 0)
         nc->send_buf.len += len;
     data->last_time = atiny_gettime_ms();

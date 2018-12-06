@@ -6,6 +6,7 @@
 #include "atiny.h"
 #include "atiny_mqtt.h"
 #include "atiny_config.h"
+#include "mqtt_packet.h"
 
 
 static atiny_device_info_t default_dev_info;
@@ -18,30 +19,40 @@ void ev_handler(atiny_connection_t *nc, int event, void *event_data)
     switch(event)
     {
         case ATINY_EV_CONNECTED:
+        {
             printf("now mqtt connect\n");
-            mqtt_pack_con_opt_t options;
+            mqtt_connect_opt_t options;
             memset(&options, 0, sizeof(options));
-            options.clientID.cstring = "liteiot";
-            options.MQTTVersion = 4;
-            options.keepAliveInterval = 60;
-            options.willFlag = 0;
+			options.connect_head = (mqtt_connect_head_t)MQTT_CONNECT_HEAD_INIT;
+			options.connect_head.keep_alive = 60;
+			options.connect_payload.client_id = "LiteIOT";
             nc->proto_handler = atiny_mqtt_event_handler;
             nc->proto_data = atiny_malloc(sizeof(atiny_mqtt_proto_data_t));
             atiny_mqtt_connect(nc, &options);
-            break;
+        }
+        break;
         case ATINY_EV_MQTT_CONNACK:
+        {
             printf("connect succuss~~~~~~~\n");
-            atiny_mqtt_msg_t msg;
-            msg.dup = 0;
-            msg.id = 0x1000;
-            msg.qos = 1;
-            msg.retained = 0;
-            msg.payload = "hello";
-            msg.payloadlen = 5;
-            atiny_mqtt_publish(nc,"abc",&msg);
-            atiny_mqtt_subscribe(nc,"sub",1);
-            atiny_mqtt_subscribe(nc,"sub1",1);
-            break;
+            mqtt_publish_opt_t options;
+		    options.publish_head.topic = "abc";
+			options.publish_payload.msg = "hello world";
+			options.dup = 0;
+			options.qos = 1;
+			options.retain = 0;
+            atiny_mqtt_publish(nc, &options);
+
+			mqtt_subscribe_opt_t sub_options;
+			sub_options.subscribe_payload.count = 2;
+			sub_options.subscribe_payload.topic = (char **)malloc(2);
+			sub_options.subscribe_payload.topic[0] = (char *)malloc(4);  memcpy(&sub_options.subscribe_payload.topic[0][0], "sub1", 4); printf("%s\n",sub_options.subscribe_payload.topic[0] );
+			sub_options.subscribe_payload.topic[1] = (char *)malloc(4);  memcpy(&sub_options.subscribe_payload.topic[1][0], "sub2", 4);
+			//sub_options.subscribe_payload.qoss = (unsigned char *)malloc(2);
+			sub_options.subscribe_payload.qoss[0] = 0;
+			sub_options.subscribe_payload.qoss[1] = 0; printf("debug1\n");
+            atiny_mqtt_subscribe(nc, &sub_options);
+        }
+        break;
         case ATINY_EV_MQTT_PUBLISH:
             printf("recv pushlish %s\n", amm->payload);
             break;

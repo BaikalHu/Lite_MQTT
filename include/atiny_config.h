@@ -1,15 +1,24 @@
 #ifndef __ATINY_CONFIG_H__
 #define __ATINY_CONFIG_H__
 
+#include <stddef.h>
 
 #define ATINY_SEND_BUF_SIZE      (1024)
 #define ATINY_RECV_BUF_SIZE      (1024)
 
-#ifdef WITH_DTLS
-#define SERVER_PORT (8883)
-#define SERVER_NAME "MacBook-Air.local"
-const char server_name[] = SERVER_NAME;
 
+
+
+#ifdef WITH_DTLS
+#ifndef SERVER_PORT
+#define SERVER_PORT (8883)
+#endif
+#ifndef SERVER_NAME
+#define SERVER_NAME "MacBook-Air.local"
+#endif
+extern const char server_name[];
+
+#ifndef MQTT_TEST_CA_CRT
 #define MQTT_TEST_CA_CRT    \
 "-----BEGIN CERTIFICATE-----\r\n"	 \
 "MIICxjCCAa6gAwIBAgIJAJk1DbZBu8FDMA0GCSqGSIb3DQEBCwUAMBMxETAPBgNV\r\n"	  \
@@ -28,9 +37,9 @@ const char server_name[] = SERVER_NAME;
 "mWpzVd5xnlp7Vz+50u+YaAYUmCobg0hR/AuTrA4GDMlgzTnuZQhF6o8iVkypXOtS\r\n"	  \
 "Ufz6X3tVVErVVc7UUfzSnupHj1M2h4rzlQ3oqHoAEnXcJmV4f/Pf/6FW\r\n"	  \
 "-----END CERTIFICATE-----\r\n"
-const char mqtt_test_cas_pem[] = MQTT_TEST_CA_CRT;
-const size_t mqtt_test_cas_pem_len = sizeof(mqtt_test_cas_pem);
+#endif
 
+#ifndef MQTT_TEST_CLI_CRT
 #define MQTT_TEST_CLI_CRT \
 "-----BEGIN CERTIFICATE-----\r\n"	 \
 "MIIC6jCCAdKgAwIBAgIBAjANBgkqhkiG9w0BAQsFADATMREwDwYDVQQDDAhNeVRl\r\n"	 \
@@ -50,10 +59,10 @@ const size_t mqtt_test_cas_pem_len = sizeof(mqtt_test_cas_pem);
 "3AbdHBAU9H2zVd2VZoJu6r7LMp6agxu0rYLgmamRAt+8rnDXvy7H1ZNdjT6fTbUO\r\n"	 \
 "omVBMyJAc1+10gjpHw/EUD58t5/I5tZrnrANPgIs\r\n"	 \
 "-----END CERTIFICATE-----\r\n"
+#endif
 
-const char mqtt_test_cli_pem[] = MQTT_TEST_CLI_CRT;
-const size_t mqtt_test_cli_pem_len = sizeof(mqtt_test_cli_pem);
 
+#ifndef MQTT_TEST_CLI_KEY
 #define MQTT_TEST_CLI_KEY \
 "-----BEGIN RSA PRIVATE KEY-----\r\n"	 \
 "MIIEowIBAAKCAQEAvBqbaS9uYb9UGt4wp+FS7w0R/0qx4PcF76kZMx7oijMWE99J\r\n"	 \
@@ -82,12 +91,23 @@ const size_t mqtt_test_cli_pem_len = sizeof(mqtt_test_cli_pem);
 "fA0P2UrzYiF7dXf4fgK9eMMQsdWS4nKyCSqM6xE4EAhAHUTYzY3ApNjI3XFDIrKC\r\n"	 \
 "oQefIOLum2UyWFuEoUtrEfc5fxktiQohCwuAvwC59EwhmsNlECA8\r\n"	 \
 "-----END RSA PRIVATE KEY-----\r\n"
+#endif
 
-const char mqtt_test_cli_key[] = MQTT_TEST_CLI_KEY;
-const size_t mqtt_test_cli_key_len = sizeof(mqtt_test_cli_key);
+extern const char mqtt_test_cas_pem[];
+extern const size_t mqtt_test_cas_pem_len;
+extern const char mqtt_test_cli_pem[];
+extern const size_t mqtt_test_cli_pem_len;
+extern const char mqtt_test_cli_key[];
+extern const size_t mqtt_test_cli_key_len;
+
+
 
 #else
+
+#ifndef SERVER_PORT
 #define SERVER_PORT (1883)
+#endif
+
 #endif
 
 
