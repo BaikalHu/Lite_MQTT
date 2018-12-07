@@ -3,12 +3,12 @@
 
 #include <stddef.h>
 
-#define ATINY_SEND_BUF_SIZE      (1024)
-#define ATINY_RECV_BUF_SIZE      (1024)
+#define ATINY_SEND_BUF_SIZE      (1000)
+#define ATINY_RECV_BUF_SIZE      (1000)
 
 
 
-
+#if 0
 #ifdef WITH_DTLS
 #ifndef SERVER_PORT
 #define SERVER_PORT (8883)
@@ -17,6 +17,10 @@
 #define SERVER_NAME "MacBook-Air.local"
 #endif
 extern const char server_name[];
+
+#define AGENT_TINY_PROJECT_ID "cb1d33433e2648b0a0f40ad1a0c5ffbb"
+#define AGENT_TINY_DEVICE_ID "894d48f8-45c0-4ac4-8d18-f5b983ef9159"
+
 
 #ifndef MQTT_TEST_CA_CRT
 #define MQTT_TEST_CA_CRT    \
@@ -109,9 +113,148 @@ extern const size_t mqtt_test_cli_key_len;
 #endif
 
 #endif
+#endif
+
+
+#if 1
+
+#define AGENT_TINY_PROJECT_ID "cb1d33433e2648b0a0f40ad1a0c5ffbb"
+#define AGENT_TINY_DEVICE_ID "894d48f8-45c0-4ac4-8d18-f5b983ef9159"
+
+
+#ifndef SERVER_PORT
+#define SERVER_PORT (8883)
+#endif
+#ifndef SERVER_NAME
+#define SERVER_NAME "kubernetes.default.svc"
+#endif
+
+extern const char server_name[];
+
+
+#define MQTT_TEST_CA_CRT    \
+"-----BEGIN CERTIFICATE-----\r\n"    \
+"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\r\n"    \
+"-----END CERTIFICATE-----\r\n"
+
+#define MQTT_TEST_CLI_CRT \
+"-----BEGIN CERTIFICATE-----\r\n"    \
+"MIIG1zCCBL+gAwIBAgIISLnoJL0MGlAwDQYJKoZIhvcNAQELBQAwgZIxCzAJBgNV\r\n"    \
+"BAYTAkNOMRIwEAYDVQQIEwlHdWFuZ0RvbmcxETAPBgNVBAcTCFNoZW5aaGVuMSUw\r\n"    \
+"IwYDVQQKExxIdWF3ZWkgVGVjaG5vbG9naWVzIENvLiwgTHRkMSEwHwYDVQQLFBhP\r\n"    \
+"U1MgJiBTZXJ2aWNlIFRvb2xzIERlcHQxEjAQBgNVBAMTCU9TUzMuMCBDQTAeFw0x\r\n"    \
+"ODExMDgxNjAwMDBaFw0yMzExMDgxNjAwMDBaMIICTDELMAkGA1UEBhMCQ04xEjAQ\r\n"    \
+"BgNVBAgTCUd1YW5nRG9uZzERMA8GA1UEBxMIU2hlblpoZW4xJTAjBgNVBAoTHEh1\r\n"    \
+"YXdlaSBUZWNobm9sb2dpZXMgQ28uLCBMdGQxITAfBgNVBAsMGE9TUyAmIFNlcnZp\r\n"    \
+"Y2UgVG9vbHMgRGVwdDFYMFYGA1UEAxNPY2IxZDMzNDMzZTI2NDhiMGEwZjQwYWQx\r\n"    \
+"YTBjNWZmYmIuODk0ZDQ4ZjgtNDVjMC00YWM0LThkMTgtZjViOTgzZWY5MTU5IE9T\r\n"    \
+"UzMuMCBDQTFGMEQGAykBARM9c3lzdGVtOm5vZGU6aHJuOmhlYzplZGdlOjg5NGQ0\r\n"    \
+"OGY4LTQ1YzAtNGFjNC04ZDE4LWY1Yjk4M2VmOTE1OTFZMFcGAykBAgxQY2IxZDMz\r\n"    \
+"NDMzZTI2NDhiMGEwZjQwYWQxYTBjNWZmYmI6Y2IxZDMzNDMzZTI2NDhiMGEwZjQw\r\n"    \
+"YWQxYTBjNWZmYmI6b3BfY2ZlX2t1YmVsZXQxWDBWBgMpAQIMT2NiMWQzMzQzM2Uy\r\n"    \
+"NjQ4YjBhMGY0MGFkMWEwYzVmZmJiOmNiMWQzMzQzM2UyNjQ4YjBhMGY0MGFkMWEw\r\n"    \
+"YzVmZmJiOm9wX3Jlc3RyaWN0ZWQxSjBIBgMpAQMTQTI0Y2JjYzFhOTMxYzRlOWNi\r\n"    \
+"MzVlMDA1YmZmMjRkN2ZhOjI0Y2JjYzFhOTMxYzRlOWNiMzVlMDA1YmZmMjRkN2Zh\r\n"    \
+"MSkwJwYDKQEEEyBjYjFkMzM0MzNlMjY0OGIwYTBmNDBhZDFhMGM1ZmZiYjCCASIw\r\n"    \
+"DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKkbiSGVWJ1xNqpnhIRnscza4r94\r\n"    \
+"rg7/BIfP+8Voj0w8/IcEjJbF7UiNmjZpOQhzdrViL8Fe1LyzylRHio7BwTi94lad\r\n"    \
+"EWD58tzDR7y5kpjdOoU6j++GEBkBDk2it8qe4SKTyt8V7xhJ00lzeJ0oTnN4kGqM\r\n"    \
+"/bVu9YTDiuE1gtN9UdRP2MfU4wEycFuCvbGFsKuHOENAmqg9pgMSGXrriQjWoydt\r\n"    \
+"xz2OZhNQEXRUM6vh0YhNfVswDNu9IEMczU4kSoQxwJbzl+iMXHtGVMckTVAsLu7J\r\n"    \
+"G7sRcFiRSG2YUHDOlUwGJH7oEs4tGDTuErS9g0rJtw6jNNsXpXIA63QMrZMCAwEA\r\n"    \
+"AaN0MHIwDgYDVR0PAQH/BAQDAgKkMBMGA1UdJQQMMAoGCCsGAQUFBwMCMAwGA1Ud\r\n"    \
+"EwEB/wQCMAAwHwYDVR0jBBgwFoAUhGSkEFXIWQXWwjYIS3nQnHzWqPYwHAYDVR0R\r\n"    \
+"BBUwE4ILZWRnZS1kZXZpY2WHBAAAAAAwDQYJKoZIhvcNAQELBQADggIBAFPV86WP\r\n"    \
+"1vj9cq9OKt3MO1VCbcmMmzxeD3Heraiedc6E/JhAvcjZliZxGBXeh2xRmk6iHlXx\r\n"    \
+"s3VTFQ8QWqr/MtECb6mMKkL54uDDCBuPVC+eeQtNwzeHV7RJ2aN6H/WNE8blPI7C\r\n"    \
+"/YArU/mvkBQ1+9p9O3TQVO7FrKMgJNrSwGthPvM5N0GU7NYzy9Fm1Qg2t7uwsfyv\r\n"    \
+"FkMK67BrTYsLG/qF8ZXLW5hnUiljPgMWOAhkKplJFtz10kcSZoHl6xsAe0N48uPc\r\n"    \
+"BWzQDDh+h6DWKxcwg1i6fw3d1ojY9lmGryKAguK44AzksnTylVMlDGw7i35k0SkZ\r\n"    \
+"bXVuJhWkXlhwhV5iDc/duzUaS/C0Vnod0hGQBZDEHfe+EqY6EvurTwYg3PsBfPs2\r\n"    \
+"VZgoHCB+asoW4UHYGILf17PNVmTpyjAE3tRS6iDXEy75ikauMJt4YVYwmebYZ6F8\r\n"    \
+"oGqcWymgvw6ELwWnEf247/igOy9gVjCjYXvCPSyAsXqkqDlaBHkdWsHoaNNvE76Y\r\n"    \
+"Xkcs93w8nQaAM+7T1h0R2jCYZA+Wym90rxyBTeZfF647ehUcNEKJqrEMLPMjXu0Z\r\n"    \
+"OWiGAMj3fF2gyWShs390LfBhHp/i0lw+ivvrl6NqU5HXcuVEiJYx9LLb234iRl9Z\r\n"    \
+"wxXflcIYZ2hdtapyOLUO+UFZRmqvCPOcxxmP\r\n"    \
+"-----END CERTIFICATE-----\r\n"
 
 
 
+#define MQTT_TEST_CLI_KEY \
+"-----BEGIN RSA PRIVATE KEY-----\r\n"    \
+"MIIEpQIBAAKCAQEAqRuJIZVYnXE2qmeEhGexzNriv3iuDv8Eh8/7xWiPTDz8hwSM\r\n"    \
+"lsXtSI2aNmk5CHN2tWIvwV7UvLPKVEeKjsHBOL3iVp0RYPny3MNHvLmSmN06hTqP\r\n"    \
+"74YQGQEOTaK3yp7hIpPK3xXvGEnTSXN4nShOc3iQaoz9tW71hMOK4TWC031R1E/Y\r\n"    \
+"x9TjATJwW4K9sYWwq4c4Q0CaqD2mAxIZeuuJCNajJ23HPY5mE1ARdFQzq+HRiE19\r\n"    \
+"WzAM270gQxzNTiRKhDHAlvOX6Ixce0ZUxyRNUCwu7skbuxFwWJFIbZhQcM6VTAYk\r\n"    \
+"fugSzi0YNO4StL2DSsm3DqM02xelcgDrdAytkwIDAQABAoIBAQCfo0HZ9S05O4Xa\r\n"    \
+"aWx8vZLoCv2guOC/gVgaiWlomuMjmjLdlprNPj1Yj2wzzzMq2i0G35CrX8U9+g+X\r\n"    \
+"bg3L4/ZuhTpkf1PHk00DwEk5TImqSrWSzYzRFWKe6BNDkMclvMRVKuWJoSAbcp3F\r\n"    \
+"qf8DhOhCM19JZp2eqAeX9Cxnm2dME2mzu9Sv2qI7sasG0SQd+0c/b6uDwa/6esZd\r\n"    \
+"ie0IjfT0pJ3rmoMGhHOA8GUkJ75D+QxNTVyN1/LCoXuJflZW5rKp/XPAtmqsjkw5\r\n"    \
+"lvvYkULZgfShz04qygnbcNalg8z7J+S2VD5vjRARb+ZncUhnOl9Xv18W4y8/BR/V\r\n"    \
+"WXBsTXfJAoGBAMrDSccJvgtsOcTrKE7mEqwx6Fan+r+kbKnlwMTrymXOjj4ypb3p\r\n"    \
+"hcR6xvaAd8qnKKqUixhd15N8M0F+8HZhpRnXnv6+Xun7Q8s0Ol83HM7ohwVjyiW+\r\n"    \
+"HOaRcsiV4if9aOHhJNzTkeksbA92rK2JylK+x5SHZPYjM2H1kzu05CVFAoGBANWC\r\n"    \
+"Gz3CPxqGDfsnV+JVOTSv4aFNOhjAdvHPUSEbOgZnlyx13JY6Yo5hxVDPL+pmTVeJ\r\n"    \
+"vk6MhPEUm7l87E5ciwBj4MUwUw4BTpKPjN+8rDfSRYfONEDMBgsC0Fm5BeGMQiLV\r\n"    \
+"eyHsk7DWAOhWel3WYVvtoY14sn+9loiajSKz+Vj3AoGBALKvtWXlrQhuAN8MCcK2\r\n"    \
+"OQBtHv63HGAlK+nx4pbn4L8lb+9aPPwHPu5u8MYtYuRBubHSJF593MxJqPXwQ0Ng\r\n"    \
+"O9pxTdnbtNNork72oPZmIEorW0ohrfTi/J8o0Mn6ZIqvZO2itxSwkqa1kilygSyS\r\n"    \
+"AK45GLNJOm07ij2q6Gy2tlQtAoGBAIMWpP8gOnpggEkJ+O2gAcWVj2Tn85mq4dzJ\r\n"    \
+"uzgmbVPtWmYT32HlawmcgfeBnhu+wBHVIqE7qYwTaSFT0Aq0yytsJ18qsnPQ3Zsi\r\n"    \
+"xA3C28JSOhqNwoteOP+dtKrB7Rh0c07L4BQOGwfh/SCpp+vhall051HjH0VK9Bff\r\n"    \
+"PHRoJ9o1AoGAdUoUOsLxbj+4f28A/QXdnLlhclBt7y0rrk7r+h2nzov4grrkKdvl\r\n"    \
+"e6XdSWUDfz64DFeqKyvD1s7t1K8d360YP3E2leVNzi4flmxBTy9lAWuZtswpvfWR\r\n"    \
+"wbShRF9IrtNTP6y8TiOjCz8CeHfiUw9uTZ98k+3HkR7HZ36kfz8Seho=\r\n"    \
+"-----END RSA PRIVATE KEY-----\r\n"
+
+
+extern const char mqtt_test_cas_pem[];
+extern const size_t mqtt_test_cas_pem_len;
+extern const char mqtt_test_cli_pem[];
+extern const size_t mqtt_test_cli_pem_len;
+extern const char mqtt_test_cli_key[];
+extern const size_t mqtt_test_cli_key_len;
+
+
+#endif
 
 
 

@@ -266,7 +266,7 @@ int atiny_ssl_handshake(atiny_connection_t *nc)
 	
     return 0;
 exit:
-    return -1;
+    return ret;
 }
 
 void atiny_ssl_destroy(atiny_connection_t *nc)
