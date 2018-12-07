@@ -86,7 +86,7 @@ void atiny_free(void *ptr)
     (void)free(ptr);
 }
 
-int atiny_snprintf(char *buf, unsigned int size, const char *format, ...)
+int atiny_snprintf(char *buf, size_t size, const char *format, ...)
 {
     int     ret;
     va_list args;

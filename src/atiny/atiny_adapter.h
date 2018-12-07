@@ -149,7 +149,7 @@ void atiny_free(void* ptr);
  *@par Dependency: none.
  *@see none.
  */
-int atiny_snprintf(char* buf, unsigned int size, const char* format, ...);
+int atiny_snprintf(char* buf, size_t size, const char* format, ...);
 
 /**
  *@ingroup atiny_adapter

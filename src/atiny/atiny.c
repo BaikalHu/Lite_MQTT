@@ -2,15 +2,19 @@
 
 #include "atiny.h"
 #include "atiny_debug.h"
+#include "atiny_adapter.h"
 #include "atiny_config.h"
-
+#include "atiny_sock.h"
+#ifdef WITH_DTLS
+#include "atiny_mbed_ssl.h"
+#endif
 
 
 static void atiny_buf_malloc(atiny_buf_t *abuf, size_t size)
 {
     abuf->size = size;
     abuf->len = 0;
-    abuf->data = atiny_malloc(size);
+    abuf->data = (unsigned char *)atiny_malloc(size);
 
 	ATINY_ASSERT(abuf->data, ATINY_ASSERT_MSG_MALLOC_ERR);
 }
@@ -19,10 +23,10 @@ static void atiny_buf_free(atiny_buf_t *abuf)
 {
     abuf->size = 0;
     abuf->len = 0;
-    atiny_free(abuf->data);
+    atiny_free((void *)abuf->data);
 }
 
-int atiny_init(atiny_manager_t *m, atiny_device_info_t *param)
+void atiny_init(atiny_manager_t *m, atiny_device_info_t *param)
 {
     ATINY_ASSERT( m, ATINY_ASSERT_MSG_PARAM_NULL);
     ATINY_ASSERT( param, ATINY_ASSERT_MSG_PARAM_NULL)

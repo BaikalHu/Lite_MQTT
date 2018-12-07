@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "atiny.h"
 #include "atiny_log.h"
 #ifdef WITH_DTLS
@@ -66,16 +68,16 @@ void atiny_nc_connect_cb(atiny_connection_t *nc)
     atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_CONNECTED,NULL);
 }
 
-void atiny_nc_can_write_cb(atiny_connection_t *nc)
+int atiny_nc_can_write_cb(atiny_connection_t *nc)
 {
     int rc = 0;
-    const char *buf = nc->send_buf.data;
+    const unsigned char *buf = nc->send_buf.data;
     size_t len = nc->send_buf.len;
     ATINY_LOG(LOG_DEBUG, "atiny_nc_can_write_cb len:%d", (int)len);
 
     nc->flags &= ~ATINY_FG_CAN_WR;
 #if WITH_DTLS
-    if(len > 0)	  rc = mbedtls_ssl_write(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl, (unsigned char *) buf, len);
+    if(len > 0)	  rc = mbedtls_ssl_write(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl,  buf, len);
 
     if (rc == MBEDTLS_ERR_SSL_WANT_WRITE)
     {
@@ -103,17 +105,19 @@ void atiny_nc_can_write_cb(atiny_connection_t *nc)
         nc->send_buf.len -= rc;
     }
     atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_SEND, NULL);
+
+    return rc;
 }
 
-void atiny_nc_can_read_cb(atiny_connection_t *nc)
+int atiny_nc_can_read_cb(atiny_connection_t *nc)
 {
     int rc = 0;
-    char *buf = nc->recv_buf.data + nc->recv_buf.len;
+    unsigned char *buf = nc->recv_buf.data + nc->recv_buf.len;
     size_t len = nc->recv_buf.size - nc->recv_buf.len;
     //printf("!!!%d %d\n", nc->recv_buf.size, nc->recv_buf.len);
     nc->flags &= ~ATINY_FG_CAN_RD;
 
-    ATINY_LOG(LOG_DEBUG, "atiny_nc_can_read_cb len:%d", len);
+    ATINY_LOG(LOG_DEBUG, "atiny_nc_can_read_cb len:%d", (int)len);
 
 #if WITH_DTLS
     if(len > 0)  rc = mbedtls_ssl_read(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl, (unsigned char *) buf, len);
@@ -144,12 +148,15 @@ void atiny_nc_can_read_cb(atiny_connection_t *nc)
         printf("rc:%d\n",rc);
         atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_RECV, NULL);
     }
+    return rc;
 }
 
 static int atiny_nc_poll_cb(atiny_connection_t *nc)
 {
     unsigned long int now = atiny_gettime_ms();
     atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_POLL, &now);
+
+    return 0;
 }
 
 static void atiny_mgr_handle_conn(atiny_connection_t *nc)

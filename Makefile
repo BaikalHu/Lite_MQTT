@@ -51,7 +51,7 @@ BUILD_DIR = build
 ######################################
 # C sources
 
-WITH_DTLS := no
+WITH_DTLS := yes
 
 # macros for gcc
 # AS defines

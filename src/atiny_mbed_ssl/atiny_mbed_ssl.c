@@ -53,6 +53,7 @@ int atiny_ssl_init(atiny_connection_t *nc, atiny_ssl_param_u *ssl_param)
     ssl_ctx->timer     = atiny_malloc(sizeof(mbedtls_timing_delay_context));
 
 #ifdef MBEDTLS_DEBUG_C
+    extern void mbedtls_debug_set_threshold( int threshold );
     mbedtls_debug_set_threshold(100);
 #endif
     mbedtls_ssl_init(ssl_ctx->ssl);
@@ -199,7 +200,7 @@ int atiny_ssl_send( void *ctx, const unsigned char *buf, size_t len)
 	return MBEDTLS_ERR_NET_SEND_FAILED;
 }
 
-int atiny_ssl_recv( void *ctx, const unsigned char *buf, size_t len)
+int atiny_ssl_recv( void *ctx, unsigned char *buf, size_t len)
 {
     int ret;
     atiny_connection_t *nc = (atiny_connection_t *)ctx;

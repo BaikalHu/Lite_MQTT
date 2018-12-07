@@ -3,10 +3,10 @@
 
 #include <stddef.h>
 
-#define ATINY_SEND_BUF_SIZE      (1000)
-#define ATINY_RECV_BUF_SIZE      (1000)
+#define ATINY_SEND_BUF_SIZE      (1024)
+#define ATINY_RECV_BUF_SIZE      (1024)
 
-
+#define SERVER_IP "122.112.225.88" //"118.190.136.167";//;//"127.0.0.1";
 
 #if 0
 #ifdef WITH_DTLS
@@ -117,6 +117,7 @@ extern const size_t mqtt_test_cli_key_len;
 
 
 #if 1
+#ifdef WITH_DTLS
 
 #define AGENT_TINY_PROJECT_ID "cb1d33433e2648b0a0f40ad1a0c5ffbb"
 #define AGENT_TINY_DEVICE_ID "894d48f8-45c0-4ac4-8d18-f5b983ef9159"
@@ -246,16 +247,25 @@ extern const char server_name[];
 "-----END RSA PRIVATE KEY-----\r\n"
 
 
-extern const char mqtt_test_cas_pem[];
+extern const unsigned char mqtt_test_cas_pem[];
 extern const size_t mqtt_test_cas_pem_len;
-extern const char mqtt_test_cli_pem[];
+extern const unsigned char mqtt_test_cli_pem[];
 extern const size_t mqtt_test_cli_pem_len;
-extern const char mqtt_test_cli_key[];
+extern const unsigned char mqtt_test_cli_key[];
 extern const size_t mqtt_test_cli_key_len;
+#else
 
+#ifndef SERVER_PORT
+#define SERVER_PORT (1883)
+#endif
+
+#define AGENT_TINY_PROJECT_ID "cb1d33433e2648b0a0f40ad1a0c5ffbb"
+#define AGENT_TINY_DEVICE_ID "894d48f8-45c0-4ac4-8d18-f5b983ef9159"
 
 #endif
 
+
+#endif
 
 
 

@@ -1,3 +1,5 @@
+#include <string.h>
+
 #include "atiny.h"
 #include "atiny_log.h"
 #include "atiny_mqtt.h"
@@ -11,20 +13,12 @@ static int getNextPacketId(atiny_connection_t *nc)
 
 int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
 {
-    unsigned char i = 0;
-    unsigned int index = 1;
     int len = 0;
-    const char *p;
     int rem_len = 0;
-    int multiplier = 1;
-    const int MAX_NO_OF_REMAINING_LENGTH_BYTES = 4;
 
-	len = mqtt_decode_fixhead(io->data, &amm->type, &amm->dup, &amm->qos, &amm->retained, &rem_len);
+	len = mqtt_decode_fixhead(io->data, &amm->type, &amm->dup, (unsigned char *)&amm->qos, &amm->retained, &rem_len);
 
     if(io->len < 2) return MQTTPACKET_BUFFER_TOO_SHORT;
-    p = io->data + len;
-
-
 
     switch(amm->type)
     {
@@ -57,14 +51,14 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
 
 				mqtt_decode_publish(io->data, len, &options);
 				amm->payloadlen = options.publish_payload.msg_len;
-				printf("load len:%d\n", amm->payloadlen);
+				ATINY_LOG(LOG_DEBUG, "load len:%d\n", (int)amm->payloadlen);
 				amm->payload = options.publish_payload.msg;
             }
             break;
     }
 
     amm->len = len + rem_len;
-	printf("real len:%d\n", amm->len);
+	ATINY_LOG(LOG_DEBUG, "real len:%d\n", (int)amm->len);
     return amm->len;
 }
 

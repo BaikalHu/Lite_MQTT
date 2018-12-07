@@ -1,5 +1,6 @@
 #include <string.h>
 
+#include "atiny_log.h"
 #include "mqtt_packet.h"
 
 static int mqtt_encode_len(unsigned char *buf, int len)
@@ -62,9 +63,9 @@ static int mqtt_decode_num(unsigned char *buf, unsigned short *num)
 	return MQTT_DATA_LEN;
 }
 
-static int mqtt_encode_string(unsigned char *buf, const unsigned char *str)
+static int mqtt_encode_string(unsigned char *buf, const char *str)
 {
-    int str_len = 0;
+    size_t str_len = 0;
 	int len = 0;
 
 	str_len = strlen(str);
@@ -74,12 +75,12 @@ static int mqtt_encode_string(unsigned char *buf, const unsigned char *str)
     return  (len + str_len);
 }
 
-static int mqtt_decode_string(unsigned char *buf, unsigned char **str, unsigned short *num)
+static int mqtt_decode_string(unsigned char *buf, char **str, unsigned short *num)
 {
 	int len = 0;
 
 	len = mqtt_decode_num(buf, num);
-	*str = buf + len;
+	*str = (char *)buf + len;
 	return (len + *num);
 }
 
@@ -210,13 +211,13 @@ int mqtt_encode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *opt
 int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *options)
 {
     int len = 0, remaning_len = 0;
-    int type = 0;
+    unsigned char type = 0;
 	unsigned char *vhead_buf;
 	unsigned char *payload_buf;
 	len = mqtt_decode_fixhead(buf, &type, &options->dup, &options->qos, &options->retain, &remaning_len);
     if(type != MQTT_PACKET_TYPE_PUBLISH)
     {
-        printf("decode pulish error\n");
+        ATINY_LOG(LOG_ERR, "decode pulish error\n");
 		return -1;
 	}
 
@@ -227,9 +228,10 @@ int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *opt
 	    vhead_buf += mqtt_decode_num(vhead_buf, &options->publish_head.packet_id);
 
 	payload_buf = vhead_buf;
-	options->publish_payload.msg = payload_buf;
+	options->publish_payload.msg = (char *)payload_buf;
     options->publish_payload.msg_len = remaning_len - options->publish_head.topic_len - MQTT_STRING_LEN;
 
+    return 0;
 }
 
 

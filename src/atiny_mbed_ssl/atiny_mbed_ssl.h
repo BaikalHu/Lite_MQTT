@@ -27,7 +27,7 @@ typedef struct atiny_ssl_ctx
 } atiny_ssl_ctx_t;
 
 int atiny_ssl_send( void *ctx, const unsigned char *buf, size_t len);
-int atiny_ssl_recv( void *ctx, const unsigned char *buf, size_t len);
+int atiny_ssl_recv( void *ctx, unsigned char *buf, size_t len);
 
 int atiny_ssl_init(atiny_connection_t *nc, atiny_ssl_param_u *ssl_param);
 int atiny_ssl_handshake(atiny_connection_t *nc);

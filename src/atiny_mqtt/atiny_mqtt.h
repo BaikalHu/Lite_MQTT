@@ -1,7 +1,7 @@
 
 #include "mqtt_packet.h"
 
-#define ATINY_EV_MQTT_BASE    0x1000
+#define ATINY_EV_MQTT_BASE             0x100
 #define ATINY_EV_MQTT_CONNECT          (ATINY_EV_MQTT_BASE + MQTT_PACKET_TYPE_CONNECT)
 #define ATINY_EV_MQTT_CONNACK          (ATINY_EV_MQTT_BASE + MQTT_PACKET_TYPE_CONNACK)
 #define ATINY_EV_MQTT_PUBLISH          (ATINY_EV_MQTT_BASE + MQTT_PACKET_TYPE_PUBLISH)
@@ -73,10 +73,6 @@ typedef struct atiny_mqtt_proto_data
 
 int atiny_mqtt_connect(atiny_connection_t *nc, mqtt_connect_opt_t *options);
 int atiny_mqtt_publish(atiny_connection_t *nc, mqtt_publish_opt_t *options);
-
+int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options);
 int atiny_mqtt_ping(atiny_connection_t *nc);
-
 void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_data);
-
-
-

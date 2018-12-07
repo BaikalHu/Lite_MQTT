@@ -61,7 +61,7 @@ typedef struct mqtt_fix_head
 
 #define MQTT_CONNECT_HEAD_INIT               \
     {{0, MQTT_PROTO_NAME_SIZE}, {'M', 'Q', 'T', 'T'}, \
-        MQTT_PROTO_LEVEL, 0, 0}
+        MQTT_PROTO_LEVEL, {0}, 0}
 
 typedef struct mqtt_connect_head
 {
@@ -143,7 +143,7 @@ typedef struct mqtt_subscribe_opt
 
 
 #define MQTT_CONNECT_OPT_INIT {{{0, MQTT_PROTO_NAME_SIZE}, {'M', 'Q', 'T', 'T'}, \
-        MQTT_PROTO_LEVEL, 0, 0}, {NULL, NULL, NULL, NULL, NULL}}
+        MQTT_PROTO_LEVEL, {0}, 0}, {NULL, NULL, NULL, NULL, NULL}}
 
 
 //int mqtt_encode_len(unsigned char *buf, int len);
