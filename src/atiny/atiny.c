@@ -26,6 +26,11 @@ static void atiny_buf_free(atiny_buf_t *abuf)
     atiny_free((void *)abuf->data);
 }
 
+void atiny_register_proto(atiny_connection_t *nc, atiny_event_handler proto_handler)
+{
+    nc->proto_handler = proto_handler;
+}
+
 void atiny_init(atiny_manager_t *m, atiny_device_info_t *param)
 {
     ATINY_ASSERT( m, ATINY_ASSERT_MSG_PARAM_NULL);

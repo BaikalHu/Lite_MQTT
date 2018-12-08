@@ -28,6 +28,16 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
         case MQTT_PACKET_TYPE_PUBACK:
             break;
         case MQTT_PACKET_TYPE_SUBACK:
+            {
+                int i = 0;
+                mqtt_suback_opt_t options;
+                mqtt_decode_suback(io->data, len, &options);
+                for(i = 0; i < options.count; i++)
+                {
+                    if(options.suback_payload.ret_code[i] != 0x80)
+                        printf("~~~~~recv suback msgid:%d\n", options.suback_head.packet_id);
+                }
+            }
 			/*
             {
                 atiny_mqtt_suback_data_t data;
@@ -51,14 +61,14 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
 
 				mqtt_decode_publish(io->data, len, &options);
 				amm->payloadlen = options.publish_payload.msg_len;
-				ATINY_LOG(LOG_DEBUG, "load len:%d\n", (int)amm->payloadlen);
+				ATINY_LOG(LOG_DEBUG, "load len:%d", (int)amm->payloadlen);
 				amm->payload = options.publish_payload.msg;
             }
             break;
     }
 
     amm->len = len + rem_len;
-	ATINY_LOG(LOG_DEBUG, "real len:%d\n", (int)amm->len);
+	ATINY_LOG(LOG_DEBUG, "real len:%d", (int)amm->len);
     return amm->len;
 }
 
@@ -83,13 +93,12 @@ void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_dat
                 }
                 nc->user_handler(nc, ATINY_EV_MQTT_BASE + amm.type, &amm);
                 memmove(nc->recv_buf.data, nc->recv_buf.data + len, nc->recv_buf.len - len);
-				printf("len~~~%d\n",len);
                 nc->recv_buf.len -= len;
             }
             break;
         case ATINY_EV_POLL:
             now = atiny_gettime_ms();
-            printf("poll 0x%ld  0x%ld\n", now, data->last_time);
+            ATINY_LOG(LOG_DEBUG, "poll 0x%ld  0x%ld", now, data->last_time);
             if((now - data->last_time > data->keep_alive*1000) && (data->last_time > 0) && (data->keep_alive > 0))
             {
                 ATINY_LOG(LOG_DEBUG, "Send ping request");
@@ -115,7 +124,7 @@ int atiny_mqtt_connect(atiny_connection_t *nc, mqtt_connect_opt_t *options)
 
     if((len = mqtt_encode_connect((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options)) <= 0)
     {
-        printf("mqtt connect error\n");
+        ATINY_LOG(LOG_ERR, "mqtt connect error");
 		return rc;
     }
     nc->send_buf.len += len;

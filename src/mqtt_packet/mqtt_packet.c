@@ -217,7 +217,7 @@ int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *opt
 	len = mqtt_decode_fixhead(buf, &type, &options->dup, &options->qos, &options->retain, &remaning_len);
     if(type != MQTT_PACKET_TYPE_PUBLISH)
     {
-        ATINY_LOG(LOG_ERR, "decode pulish error\n");
+        ATINY_LOG(LOG_ERR, "decode pulish error");
 		return -1;
 	}
 
@@ -246,7 +246,6 @@ int mqtt_encode_subscribe(unsigned char *buf, int buf_len, mqtt_subscribe_opt_t 
 
 	for(int i = 0; i < options->subscribe_payload.count; i++)
     {
-        printf("~~~~~%s\n", (options->subscribe_payload.topic[i]));
         remaining_len += MQTT_STRING_LEN + MQTT_QOS_LEN + (int)strlen(options->subscribe_payload.topic[i]);
 	}
 	
@@ -267,6 +266,33 @@ int mqtt_encode_subscribe(unsigned char *buf, int buf_len, mqtt_subscribe_opt_t 
 
     return (len + remaining_len);
 }
+
+int mqtt_decode_suback(unsigned char *buf, int buf_len, mqtt_suback_opt_t *options)
+{
+    int i = 0;
+    int len = 0, remaning_len = 0;
+    unsigned char type = 0;
+	unsigned char reserved = 0;
+	unsigned char *vhead_buf;
+	unsigned char *payload_buf;
+	len = mqtt_decode_fixhead(buf, &type, &reserved, &reserved, &reserved, &remaning_len);
+    if(type != MQTT_PACKET_TYPE_SUBACK)
+    {
+        ATINY_LOG(LOG_ERR, "decode suback error");
+		return -1;
+	}
+
+    vhead_buf = buf + len;
+    vhead_buf += mqtt_decode_num(vhead_buf, &options->suback_head.packet_id);
+
+    payload_buf = vhead_buf;
+    options->count = (remaning_len - MQTT_DATA_LEN);
+	for(i = 0; i < options->count; i++)
+	    options->suback_payload.ret_code[i] = payload_buf[i];
+
+    return 0;
+}
+
 
 int mqtt_encode_ping(unsigned char *buf, int buf_len)
 {

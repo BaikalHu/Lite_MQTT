@@ -15,14 +15,16 @@ extern atiny_if_funcs_t linux_sock;
 
 void ev_handler(atiny_connection_t *nc, int event, void *event_data)
 {
-    printf("ev_handler in main\n");
+    ATINY_LOG(LOG_DEBUG, "ev_handler in main");
     atiny_mqtt_msg_t *amm = (atiny_mqtt_msg_t *)event_data;
     switch(event)
     {
         case ATINY_EV_CONNECTED:
             {
-                printf("now mqtt connect\n");
+                ATINY_LOG(LOG_DEBUG, "now mqtt connect");
                 mqtt_connect_opt_t options;
+
+				atiny_register_proto(nc, atiny_mqtt_event_handler);
                 memset(&options, 0, sizeof(options));
                 options.connect_head = (mqtt_connect_head_t)MQTT_CONNECT_HEAD_INIT;
                 options.connect_head.keep_alive = 60;
@@ -31,14 +33,13 @@ void ev_handler(atiny_connection_t *nc, int event, void *event_data)
                 options.connect_head.mqtt_connect_flag_u.bits.psd_flag = 1;
                 options.connect_payload.user_name = "LiteIOT";
                 options.connect_payload.password = "123456";
-                nc->proto_handler = atiny_mqtt_event_handler;
                 nc->proto_data = (void *)atiny_malloc((size_t)sizeof(atiny_mqtt_proto_data_t));
                 atiny_mqtt_connect(nc, &options);
             }
             break;
         case ATINY_EV_MQTT_CONNACK:
             {
-                printf("connect succuss~~~~~~~\n");
+                ATINY_LOG(LOG_DEBUG, "mqtt connect succuss");
                 mqtt_subscribe_opt_t sub_options;
                 sub_options.subscribe_payload.count = 5;
                 sub_options.subscribe_payload.topic = (char **)malloc(5);
@@ -77,13 +78,11 @@ void ev_handler(atiny_connection_t *nc, int event, void *event_data)
                 options.qos = 1;
                 options.retain = 0;
                 atiny_mqtt_publish(nc, &options);
-
-                printf("publish~~~~~~~\n");
             }
             break;
         case ATINY_EV_MQTT_PUBLISH:
             {
-                printf("recv pushlish %s\n", (char *)amm->payload);
+                ATINY_LOG(LOG_INFO, "recv pushlish %s", (char *)amm->payload);
                 int len = 0;
 
                 if (amm->qos != QOS0)

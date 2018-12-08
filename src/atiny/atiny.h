@@ -134,6 +134,9 @@ typedef struct atiny_connect_param
 #endif
 } atiny_connect_param_t;
 
+void atiny_register_proto(atiny_connection_t *nc, atiny_event_handler proto_handler);
+
+
 void atiny_init(atiny_manager_t *m,  atiny_device_info_t *param);
 atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb);
 atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param);

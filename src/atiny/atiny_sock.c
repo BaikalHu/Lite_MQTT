@@ -95,7 +95,7 @@ int atiny_nc_can_write_cb(atiny_connection_t *nc)
 
     if(rc < 0)
     {
-        printf("write error\n");
+        ATINY_LOG(LOG_ERR, "atiny write error");
     }
     else if(rc > 0)
     {
@@ -114,7 +114,6 @@ int atiny_nc_can_read_cb(atiny_connection_t *nc)
     int rc = 0;
     unsigned char *buf = nc->recv_buf.data + nc->recv_buf.len;
     size_t len = nc->recv_buf.size - nc->recv_buf.len;
-    //printf("!!!%d %d\n", nc->recv_buf.size, nc->recv_buf.len);
     nc->flags &= ~ATINY_FG_CAN_RD;
 
     ATINY_LOG(LOG_DEBUG, "atiny_nc_can_read_cb len:%d", (int)len);
@@ -137,7 +136,7 @@ int atiny_nc_can_read_cb(atiny_connection_t *nc)
 
     if(rc< 0)
     {
-        printf("read error\n");
+        ATINY_LOG(LOG_ERR, "read error");
         //TODO
         //should close the connection
     }
@@ -145,7 +144,6 @@ int atiny_nc_can_read_cb(atiny_connection_t *nc)
     {
         nc->last_time = atiny_gettime_ms();
         nc->recv_buf.len += rc;
-        printf("rc:%d\n",rc);
         atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_RECV, NULL);
     }
     return rc;
@@ -161,8 +159,6 @@ static int atiny_nc_poll_cb(atiny_connection_t *nc)
 
 static void atiny_mgr_handle_conn(atiny_connection_t *nc)
 {
-    //ATINY_LOG(LOG_DEBUG, "atiny_mgr_handle_conn 0x%x", nc->flags);
-
     atiny_nc_poll_cb(nc);
 
     if(nc->flags & ATINY_FG_CONNECTING)
@@ -250,7 +246,7 @@ atiny_time_t atiny_sock_poll(atiny_if_t *interface, int timeout_ms)
 	now = atiny_gettime_ms();
 
     if(rc == -1)
-        printf("select() error\n");
+        ATINY_LOG(LOG_ERR, "select() error");
     else if(rc > 0)
     {
         if(FD_ISSET(m->nc->sock_fd, &rfds)) {m->nc->flags |= ATINY_FG_CAN_RD;}
@@ -278,7 +274,7 @@ int atiny_sock_recv(atiny_connection_t *nc, void *buf, size_t len)
     int rc;
 	
     rc = recv(nc->sock_fd, buf, len, 0);
-	printf("sock recv len:%d\n", rc);
+	ATINY_LOG(LOG_DEBUG, "sock recv len:%d", rc);
     return rc;
 }
 

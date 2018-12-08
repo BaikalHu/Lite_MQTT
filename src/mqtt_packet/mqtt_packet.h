@@ -141,6 +141,23 @@ typedef struct mqtt_subscribe_opt
 	mqtt_subscribe_payload_t subscribe_payload;
 } mqtt_subscribe_opt_t;
 
+typedef struct mqtt_suback_head
+{
+    unsigned short packet_id;
+} mqtt_suback_head_t;
+
+typedef struct mqtt_suback_payload
+{
+    unsigned char ret_code[0];
+} mqtt_suback_payload_t;
+
+typedef struct mqtt_suback_opt
+{
+    unsigned char count;
+    mqtt_suback_head_t suback_head;
+    mqtt_suback_payload_t suback_payload;
+} mqtt_suback_opt_t;
+
 
 #define MQTT_CONNECT_OPT_INIT {{{0, MQTT_PROTO_NAME_SIZE}, {'M', 'Q', 'T', 'T'}, \
         MQTT_PROTO_LEVEL, {0}, 0}, {NULL, NULL, NULL, NULL, NULL}}
@@ -165,6 +182,6 @@ int mqtt_decode_fixhead(unsigned char *buf, unsigned char *type, unsigned char *
 
 
 int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *options);
-
+int mqtt_decode_suback(unsigned char *buf, int buf_len, mqtt_suback_opt_t *options);
 
 #endif
