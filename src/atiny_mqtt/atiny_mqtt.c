@@ -36,7 +36,7 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
                 {
                     if(options.suback_payload.ret_code[i] != 0x80)
                     {
-                        printf("~~~~~recv suback msgid:%d\n", options.suback_head.packet_id);
+                        ATINY_LOG(LOG_DEBUG, "suback msgid:%d\n", options.suback_head.packet_id);
 						amm->mqtt_data->messageHandlers[i].efficient = 1;
                     }
                     else

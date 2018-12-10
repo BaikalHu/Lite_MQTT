@@ -14,4 +14,6 @@
 
 ## 注：
 
-对于publish来的message的处理都在各个*_message_cb函数中，请自行添加，默认打印message。
+1.对于publish来的message的处理都在各个*_message_cb函数中，请自行添加具体的处理，默认打印message。
+
+2.lwip的支持。lwip的socket api和当前使用的linux socket保持一致，可以快速移植到MCU的lwip上执行。
