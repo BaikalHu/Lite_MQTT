@@ -84,18 +84,25 @@ void ev_handler(atiny_connection_t *nc, int event, void *event_data)
             {
                 ATINY_LOG(LOG_INFO, "recv pushlish %s", (char *)amm->payload);
                 int len = 0;
+                mqtt_puback_opt_t options;
 
                 if (amm->qos != QOS0)
                 {
                     if (amm->qos == QOS1)
-                        ;//len = MQTTSerialize_ack((nc->send_buf.data + nc->send_buf.len), c->buf_size, PUBACK, 0, amm->id);
+                    {
+                        options.type = MQTT_PACKET_TYPE_PUBACK;
+                        len = atiny_mqtt_puback(nc, &options);
+                    }
                     else if (amm->qos == QOS2)
-                        ;//len = MQTTSerialize_ack(c->buf, c->buf_size, PUBREC, 0, msg.id);
+                    {
+                        options.type = MQTT_PACKET_TYPE_PUBREC;
+                        len = atiny_mqtt_puback(nc, &options);
+                    }
                     if (len <= 0)
                         printf("error\n");
                 }
            }
-            break;
+           break;
         default:
             break;
     }

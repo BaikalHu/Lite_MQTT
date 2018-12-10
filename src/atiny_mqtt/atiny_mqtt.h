@@ -70,9 +70,10 @@ typedef struct atiny_mqtt_proto_data
 } atiny_mqtt_proto_data_t;
 
 
-
+int getNextPacketId(atiny_connection_t *nc);
 int atiny_mqtt_connect(atiny_connection_t *nc, mqtt_connect_opt_t *options);
 int atiny_mqtt_publish(atiny_connection_t *nc, mqtt_publish_opt_t *options);
 int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options);
+int atiny_mqtt_puback(atiny_connection_t *nc, mqtt_puback_opt_t *options);
 int atiny_mqtt_ping(atiny_connection_t *nc);
 void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_data);

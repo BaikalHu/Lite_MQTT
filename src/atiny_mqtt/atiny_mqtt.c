@@ -4,7 +4,7 @@
 #include "atiny_log.h"
 #include "atiny_mqtt.h"
 
-static int getNextPacketId(atiny_connection_t *nc)
+int getNextPacketId(atiny_connection_t *nc)
 {
     atiny_mqtt_proto_data_t *pd = (atiny_mqtt_proto_data_t *)nc->proto_data;
     return pd->next_packetid = (pd->next_packetid == MAX_PACKET_ID) ? 1 : pd->next_packetid + 1;
@@ -61,7 +61,7 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
 
 				mqtt_decode_publish(io->data, len, &options);
 				amm->payloadlen = options.publish_payload.msg_len;
-				ATINY_LOG(LOG_DEBUG, "load len:%d", (int)amm->payloadlen);
+				ATINY_LOG(LOG_DEBUG, "publish payload len:%d", (int)amm->payloadlen);
 				amm->payload = options.publish_payload.msg;
             }
             break;
@@ -177,3 +177,22 @@ int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options)
 
     return len;
 }
+
+int atiny_mqtt_puback(atiny_connection_t *nc, mqtt_puback_opt_t *options)
+{
+    int len = 0;
+    atiny_mqtt_proto_data_t *data;
+    data = (atiny_mqtt_proto_data_t *)nc->proto_data;
+	options->puback_head.packet_id = getNextPacketId(nc);
+
+    len = mqtt_encode_puback((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options);
+    if(len > 0)
+        nc->send_buf.len += len;
+    data->last_time = atiny_gettime_ms();
+
+    return len;
+
+
+
+}
+

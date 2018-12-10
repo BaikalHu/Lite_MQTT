@@ -293,6 +293,17 @@ int mqtt_decode_suback(unsigned char *buf, int buf_len, mqtt_suback_opt_t *optio
     return 0;
 }
 
+int mqtt_encode_puback(unsigned char *buf, int buf_len, mqtt_puback_opt_t *options)
+{
+    int len = 0;
+    int remaining_len = sizeof(options->puback_head);
+    unsigned char *vhead_buf;
+
+	len = mqtt_encode_fixhead(buf, options->type, 0, 0, 0, remaining_len);
+	vhead_buf = buf + len;
+	vhead_buf += mqtt_encode_num(vhead_buf, options->puback_head.packet_id);
+	return (len + remaining_len);
+}
 
 int mqtt_encode_ping(unsigned char *buf, int buf_len)
 {
@@ -301,6 +312,3 @@ int mqtt_encode_ping(unsigned char *buf, int buf_len)
 
 	return len;
 }
-
-
-
