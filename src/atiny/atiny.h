@@ -24,6 +24,9 @@
 #define ATINY_FG_CAN_WR (1 << 3)
 #define ATINY_FG_ERR    (1 << 4)
 
+#define ATINY_FG_RECONNECT  (1 << 5)
+
+
 #define ATINY_EV_POLL       1
 #define ATINY_EV_CONNECTED  2
 #define ATINY_EV_SEND       3
@@ -42,7 +45,7 @@ typedef void (*atiny_event_handler)(atiny_connection_t *nc, int event, void *eve
 
 typedef struct atiny_buf
 {
-    char *data;
+    unsigned char *data;
     size_t len;    //data len
     size_t size;   //total size
 } atiny_buf_t;
@@ -106,12 +109,12 @@ typedef struct atiny_ssl_psk
 
 typedef struct atiny_ssl_ca
 {
-    const unsigned char *server_name;
-    const unsigned char *ca_cert;
+    const  char *server_name;
+    const  unsigned char *ca_cert;
     size_t ca_cert_len;
-    const unsigned char *client_cert;
+    const  unsigned char *client_cert;
     size_t client_cert_len;
-    const unsigned char *client_key;
+    const  unsigned char *client_key;
     size_t client_key_len;
 } atiny_ssl_ca_t;
 
@@ -134,9 +137,11 @@ typedef struct atiny_connect_param
 #endif
 } atiny_connect_param_t;
 
-int atiny_init(atiny_manager_t *m,  atiny_device_info_t *param);
-atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb);
-atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param);
+void atiny_register_proto(atiny_connection_t *nc, atiny_event_handler proto_handler);
+
+
+void atiny_init(atiny_manager_t *m,  atiny_device_info_t *param);
+atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param);
 void atiny_poll(atiny_manager_t *m, int timeout_ms);
 
 

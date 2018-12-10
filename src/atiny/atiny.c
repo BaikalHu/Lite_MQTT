@@ -1,75 +1,52 @@
 #include <string.h>
 
 #include "atiny.h"
+#include "atiny_debug.h"
+#include "atiny_adapter.h"
+#include "atiny_config.h"
+#include "atiny_sock.h"
+#ifdef WITH_DTLS
+#include "atiny_mbed_ssl.h"
+#endif
 
 
-
-
-
-void atiny_buf_init(atiny_buf_t *abuf, size_t size)
+static void atiny_buf_malloc(atiny_buf_t *abuf, size_t size)
 {
     abuf->size = size;
     abuf->len = 0;
-	abuf->data = atiny_malloc(size);
+    abuf->data = (unsigned char *)atiny_malloc(size);
+
+	ATINY_ASSERT(abuf->data, ATINY_ASSERT_MSG_MALLOC_ERR);
 }
 
-
-
-int atiny_parse_address(struct sockaddr_in *addr, char *server_ip, unsigned int server_port)
+static void atiny_buf_free(atiny_buf_t *abuf)
 {
-    int rc = -1;
-    struct addrinfo *result = NULL;
-    struct addrinfo hints = {0, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
-
-    if ((rc = getaddrinfo(server_ip, NULL, &hints, &result)) == 0)
-    {
-        struct addrinfo *res = result;
-
-        while (res)
-        {
-            if (res->ai_family == AF_INET)
-            {
-                result = res;
-                break;
-            }
-            res = res->ai_next;
-        }
-
-        if (result->ai_family == AF_INET)
-        {
-            addr->sin_port = htons((unsigned short)server_port);
-            addr->sin_family = AF_INET;
-            addr->sin_addr = ((struct sockaddr_in *)(result->ai_addr))->sin_addr;
-        }
-        else
-            rc = -1;
-
-        freeaddrinfo(result);
-    }
-
-    return rc;
+    abuf->size = 0;
+    abuf->len = 0;
+    atiny_free((void *)abuf->data);
 }
 
-
-int atiny_init(atiny_manager_t *m, atiny_device_info_t *param)
+void atiny_register_proto(atiny_connection_t *nc, atiny_event_handler proto_handler)
 {
+    nc->proto_handler = proto_handler;
+}
+
+void atiny_init(atiny_manager_t *m, atiny_device_info_t *param)
+{
+    ATINY_ASSERT( m, ATINY_ASSERT_MSG_PARAM_NULL);
+    ATINY_ASSERT( param, ATINY_ASSERT_MSG_PARAM_NULL)
+
     m->interface = (atiny_if_t *)atiny_malloc(sizeof(atiny_if_t));
+	ATINY_ASSERT(m->interface, ATINY_ASSERT_MSG_MALLOC_ERR);
+
     m->interface->mgr = m;
     m->interface->ifuncs = param->ifuncs;
     m->interface->ifuncs->init(m->interface);
 }
 
-
-
-atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb)
+atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param)
 {
-  atiny_connect_param_t params;
-  memset(&params, 0, sizeof(params));
-  return atiny_connect_with_param(m, cb, params);
-}
-
-atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param)
-{
+    int ret;
     atiny_connection_t *nc = NULL;
     if((nc = (atiny_connection_t *)atiny_malloc(sizeof(atiny_connection_t))) != NULL)
     {
@@ -81,13 +58,28 @@ atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_han
         nc->user_handler = cb;
         nc->proto_handler = NULL;
         nc->last_time = atiny_gettime_ms();
-		atiny_buf_init(&(nc->send_buf), 1024);
-		atiny_buf_init(&(nc->recv_buf), 1024);
-        atiny_parse_address(&(nc->address), param.server_ip, param.server_port);
+		atiny_buf_malloc(&(nc->send_buf), ATINY_SEND_BUF_SIZE);
+		atiny_buf_malloc(&(nc->recv_buf), ATINY_RECV_BUF_SIZE);
+        if(atiny_parse_address(&(nc->address), param.server_ip, param.server_port) < 0)
+        {
+            atiny_buf_free(&(nc->send_buf));
+            atiny_buf_free(&(nc->recv_buf));
+			atiny_free(nc);
+			return NULL;
+        }
     }
+    else
+        return nc;
 
 #ifdef WITH_DTLS
-    atiny_ssl_init(nc, &param.ssl_param);
+    ret = atiny_ssl_init(nc, &param.ssl_param);
+    if(ret != 0)
+    {
+        atiny_buf_free(&(nc->send_buf));
+        atiny_buf_free(&(nc->recv_buf));
+        atiny_free(nc);
+        return NULL;
+    }
 #endif
 
     m->interface->ifuncs->connect(nc);

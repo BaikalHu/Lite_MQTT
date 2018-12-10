@@ -34,6 +34,7 @@ PROJECTBASE = $(PWD)
 override PROJECTBASE    := $(abspath $(PROJECTBASE))
 TOP_DIR = $(PROJECTBASE)
 SRC = $(TOP_DIR)/src
+INC = $(TOP_DIR)/include
 
 
 #######################################
@@ -63,9 +64,9 @@ C_DEFS :=  \
 
 ifeq ($(WITH_DTLS), yes)
 C_DEFS +=  \
+        -D DEBUG \
         -D USE_MBED_TLS \
         -D WITH_DTLS  \
-        -D MBEDTLS_DEBUG_C \
         -D MBEDTLS_CONFIG_FILE=\"atiny_mbedtls_config_x509.h\" \
         -D LWIP_TIMEVAL_PRIVATE=0
 
@@ -152,6 +153,7 @@ MQTT_PACKET_INC = \
         -I $(SRC)/mqtt_packet
         C_INCLUDES += $(MQTT_PACKET_INC)
 
+
 MQTT_INC = \
         -I $(SRC)/atiny_mqtt
         C_INCLUDES += $(MQTT_INC)
@@ -163,6 +165,10 @@ ATINY_LOG_INC = \
 ATINY_INC = \
         -I $(SRC)/atiny
         C_INCLUDES += $(ATINY_INC)
+
+ATINY_DBG_INC = \
+        -I $(INC)
+        C_INCLUDES += $(ATINY_DBG_INC)
 
 # compile gcc flags
 ASFLAGS = $(MCU) $(AS_DEFS) $(AS_INCLUDES) $(OPT) -Wall -fdata-sections -ffunction-sections

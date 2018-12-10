@@ -1,8 +1,46 @@
+#include <string.h>
+
 #include "atiny.h"
 #include "atiny_log.h"
 #ifdef WITH_DTLS
 #include "atiny_mbed_ssl.h"
 #endif
+
+int atiny_parse_address(struct sockaddr_in *addr, char *server_ip, unsigned int server_port)
+{
+    int rc = -1;
+    struct addrinfo *result = NULL;
+    struct addrinfo hints = {0, AF_UNSPEC, SOCK_STREAM, IPPROTO_TCP, 0, NULL, NULL, NULL};
+
+    if ((rc = getaddrinfo(server_ip, NULL, &hints, &result)) == 0)
+    {
+        struct addrinfo *res = result;
+
+        while (res)
+        {
+            if (res->ai_family == AF_INET)
+            {
+                result = res;
+                break;
+            }
+            res = res->ai_next;
+        }
+
+        if (result->ai_family == AF_INET)
+        {
+            addr->sin_port = htons((unsigned short)server_port);
+            addr->sin_family = AF_INET;
+            addr->sin_addr = ((struct sockaddr_in *)(result->ai_addr))->sin_addr;
+        }
+        else
+            rc = -1;
+
+        freeaddrinfo(result);
+    }
+
+    return rc;
+}
+
 
 void atiny_dispatch_event(atiny_connection_t *nc, atiny_event_handler event_handler, void *user_data, int event, void *event_data)
 {
@@ -19,12 +57,19 @@ void atiny_dispatch_event(atiny_connection_t *nc, atiny_event_handler event_hand
 
 void atiny_nc_connect_cb(atiny_connection_t *nc)
 {
+    int ret = 0;
     ATINY_LOG(LOG_DEBUG, "atiny_nc_connect_cb");
     nc->flags &= ~ATINY_FG_CONNECTING;
 #if WITH_DTLS
-//if (err == 0 && (nc->flags & MG_F_SSL)) {
-    atiny_ssl_handshake(nc);
-//  } else
+    ret = atiny_ssl_handshake(nc);
+    if(ret == 0)
+    {
+        nc->flags &= ~(ATINY_FG_CAN_RD | ATINY_FG_CAN_WR);
+    }
+    else if(ret == MBEDTLS_ERR_SSL_WANT_READ)
+        nc->flags |= ATINY_FG_CAN_RD;
+    else if(ret == MBEDTLS_ERR_SSL_WANT_WRITE)
+        nc->flags |= ATINY_FG_CAN_WR;
 #endif
 
     atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_CONNECTED,NULL);
@@ -33,31 +78,36 @@ void atiny_nc_connect_cb(atiny_connection_t *nc)
 void atiny_nc_can_write_cb(atiny_connection_t *nc)
 {
     int rc = 0;
-    const char *buf = nc->send_buf.data;
+    const unsigned char *buf = nc->send_buf.data;
     size_t len = nc->send_buf.len;
     ATINY_LOG(LOG_DEBUG, "atiny_nc_can_write_cb len:%d", (int)len);
 
     nc->flags &= ~ATINY_FG_CAN_WR;
 #if WITH_DTLS
-    if(len > 0)	  rc = mbedtls_ssl_write(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl, (unsigned char *) buf, len);
+    if(len > 0)
+        rc = mbedtls_ssl_write(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl,  buf, len);
 
     if (rc == MBEDTLS_ERR_SSL_WANT_WRITE)
     {
-        return 0;
+        nc->flags |= ATINY_FG_CAN_WR;
     }
     else if (rc < 0)
     {
-        return -1;
+        nc->flags |= ATINY_FG_RECONNECT;
+    }
+    else
+    {
+        nc->flags &= ~ATINY_FG_CAN_WR;
     }
 #else
     if(len > 0)
         rc = nc->mgr->interface->ifuncs->send(nc, buf, len);
 #endif
 
-
     if(rc < 0)
     {
-        printf("write error\n");
+        ATINY_LOG(LOG_ERR, "atiny write error");
+        nc->flags |= ATINY_FG_RECONNECT;
     }
     else if(rc > 0)
     {
@@ -72,23 +122,26 @@ void atiny_nc_can_write_cb(atiny_connection_t *nc)
 void atiny_nc_can_read_cb(atiny_connection_t *nc)
 {
     int rc = 0;
-    char *buf = nc->recv_buf.data + nc->recv_buf.len;
+    unsigned char *buf = nc->recv_buf.data + nc->recv_buf.len;
     size_t len = nc->recv_buf.size - nc->recv_buf.len;
-    //printf("!!!%d %d\n", nc->recv_buf.size, nc->recv_buf.len);
     nc->flags &= ~ATINY_FG_CAN_RD;
 
-    ATINY_LOG(LOG_DEBUG, "atiny_nc_can_read_cb len:%d", len);
+    ATINY_LOG(LOG_DEBUG, "atiny_nc_can_read_cb len:%d", (int)len);
 
 #if WITH_DTLS
     if(len > 0)  rc = mbedtls_ssl_read(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl, (unsigned char *) buf, len);
 
     if (rc == MBEDTLS_ERR_SSL_WANT_READ)
     {
-        return 0;
+        nc->flags |= ATINY_FG_CAN_RD;
     }
     else if (rc < 0)
     {
-        return -1;
+        nc->flags |= ATINY_FG_RECONNECT;
+    }
+    else
+    {
+        nc->flags &= ~ATINY_FG_CAN_RD;
     }
 #else
     if(len > 0)
@@ -97,20 +150,18 @@ void atiny_nc_can_read_cb(atiny_connection_t *nc)
 
     if(rc< 0)
     {
-        printf("read error\n");
-        //TODO
-        //should close the connection
+        ATINY_LOG(LOG_ERR, "read error");
+		nc->flags |= ATINY_FG_RECONNECT;
     }
     else if(rc > 0)
     {
         nc->last_time = atiny_gettime_ms();
         nc->recv_buf.len += rc;
-        printf("rc:%d\n",rc);
         atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_RECV, NULL);
     }
 }
 
-static int atiny_nc_poll_cb(atiny_connection_t *nc)
+static void atiny_nc_poll_cb(atiny_connection_t *nc)
 {
     unsigned long int now = atiny_gettime_ms();
     atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_POLL, &now);
@@ -118,8 +169,6 @@ static int atiny_nc_poll_cb(atiny_connection_t *nc)
 
 static void atiny_mgr_handle_conn(atiny_connection_t *nc)
 {
-    //ATINY_LOG(LOG_DEBUG, "atiny_mgr_handle_conn 0x%x", nc->flags);
-
     atiny_nc_poll_cb(nc);
 
     if(nc->flags & ATINY_FG_CONNECTING)
@@ -153,23 +202,28 @@ void atiny_sock_uninit(atiny_if_t *interface)
 void atiny_sock_connect(atiny_connection_t *nc)
 {
     int rc = 0;
+
     nc->sock_fd = socket(AF_INET, SOCK_STREAM, 0);
-    printf("sock fd:%d\n", nc->sock_fd);
     if (nc->sock_fd == -1) {
-      ATINY_LOG(LOG_ERR, "socket error");
-      return;
+        ATINY_LOG(LOG_ERR, "socket error");
+        return;
     }
 
     rc = connect(nc->sock_fd, (struct sockaddr *)&nc->address, sizeof(nc->address));
-    printf("connect rc:%d\n", rc);
     if(rc < 0)
-      ATINY_LOG(LOG_ERR, "sock %d rc %d ",  nc->sock_fd, rc);
+        ATINY_LOG(LOG_ERR, "sock %d rc %d ",  nc->sock_fd, rc);
 }
 
 void atiny_sock_discon(atiny_connection_t *nc)
 {
+    int rc = 0;
 
+    if(nc->sock_fd == -1)
+        return;
 
+    rc = close(nc->sock_fd);
+    if(rc < 0)
+        ATINY_LOG(LOG_ERR, "sock %d rc %d ",  nc->sock_fd, rc);
 }
 
 
@@ -202,7 +256,7 @@ atiny_time_t atiny_sock_poll(atiny_if_t *interface, int timeout_ms)
 	now = atiny_gettime_ms();
 
     if(rc == -1)
-        printf("select() error\n");
+        ATINY_LOG(LOG_ERR, "select() error");
     else if(rc > 0)
     {
         if(FD_ISSET(m->nc->sock_fd, &rfds)) {m->nc->flags |= ATINY_FG_CAN_RD;}
@@ -219,9 +273,8 @@ atiny_time_t atiny_sock_poll(atiny_if_t *interface, int timeout_ms)
 int atiny_sock_send(atiny_connection_t *nc, const void *buf, size_t len)
 {
     int rc;
-    //printf("sock send len:%d\n", len);
+
     rc = send(nc->sock_fd, buf, len, 0);
-    //printf("rc:%d\n",rc);
 
     return rc;
 }
@@ -231,7 +284,7 @@ int atiny_sock_recv(atiny_connection_t *nc, void *buf, size_t len)
     int rc;
 	
     rc = recv(nc->sock_fd, buf, len, 0);
-	printf("sock recv len:%d\n", rc);
+	ATINY_LOG(LOG_DEBUG, "sock recv len:%d", rc);
     return rc;
 }
 
