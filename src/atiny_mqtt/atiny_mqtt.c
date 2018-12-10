@@ -35,34 +35,38 @@ int atiny_mqtt_parser(atiny_buf_t *io, atiny_mqtt_msg_t *amm)
                 for(i = 0; i < options.count; i++)
                 {
                     if(options.suback_payload.ret_code[i] != 0x80)
+                    {
                         printf("~~~~~recv suback msgid:%d\n", options.suback_head.packet_id);
+						amm->mqtt_data->messageHandlers[i].efficient = 1;
+                    }
+                    else
+                    {
+                        amm->mqtt_data->messageHandlers[i].efficient = 0;
+                    }
                 }
             }
-			/*
-            {
-                atiny_mqtt_suback_data_t data;
-                data.grantedQoS= QOS0;
-                int count = 0;
-                unsigned short msgid;
-                if (MQTTDeserialize_suback(&msgid, 1, &count, (int *)&data.grantedQoS, io->data, rem_len) == 1)
-                {
-                    if (data.grantedQoS != 0x80)
-                        printf("~~~~~recv suback msgid:%d\n", msgid);
-                    //rc = MQTTSetMessageHandler(c, topicFilter, messageHandler);
-                }
-            }
-            */
             break;
         case MQTT_PACKET_TYPE_UNSUBACK:
             break;
         case MQTT_PACKET_TYPE_PUBLISH:
             {
                 mqtt_publish_opt_t options;
+				int i = 0;
 
-				mqtt_decode_publish(io->data, len, &options);
-				amm->payloadlen = options.publish_payload.msg_len;
-				ATINY_LOG(LOG_DEBUG, "publish payload len:%d", (int)amm->payloadlen);
-				amm->payload = options.publish_payload.msg;
+                mqtt_decode_publish(io->data, len, &options);
+                amm->payloadlen = options.publish_payload.msg_len;
+                ATINY_LOG(LOG_DEBUG, "publish payload len:%d", (int)amm->payloadlen);
+                amm->payload = options.publish_payload.msg;
+				for(i = 0; i < ATINY_MQTT_BUILTIN_NUM; i++)
+				{
+                    if(memcmp(options.publish_head.topic, amm->mqtt_data->messageHandlers[i].topicFilter, options.publish_head.topic_len) == 0)
+                    {
+                        if(amm->mqtt_data->messageHandlers[i].efficient)
+                        {
+                            amm->mqtt_data->messageHandlers[i].cb(amm->payload);
+                        }
+                    }
+                }
             }
             break;
     }
@@ -77,6 +81,7 @@ void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_dat
     int len;
     atiny_mqtt_msg_t amm = {0};
     atiny_mqtt_proto_data_t *data = (atiny_mqtt_proto_data_t *)nc->proto_data;
+    amm.mqtt_data = data;
     atiny_time_t now;
     atiny_buf_t *io = &nc->recv_buf;
 	nc->user_handler(nc, event, event_data);
@@ -99,7 +104,7 @@ void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_dat
         case ATINY_EV_POLL:
             now = atiny_gettime_ms();
             ATINY_LOG(LOG_DEBUG, "poll 0x%ld  0x%ld", now, data->last_time);
-            if((now - data->last_time > data->keep_alive*1000) && (data->last_time > 0) && (data->keep_alive > 0))
+            if(((now - data->last_time) > data->keep_alive*1000) && (data->last_time > 0) && (data->keep_alive > 0))
             {
                 ATINY_LOG(LOG_DEBUG, "Send ping request");
                 atiny_mqtt_ping(nc);
@@ -163,12 +168,19 @@ int atiny_mqtt_publish(atiny_connection_t *nc, mqtt_publish_opt_t *options)
     return len;
 }
 
-int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options)
+int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options, atiny_mqtt_msg_handler *cbs)
 {
     int len = 0;
+    int i = 0;
     atiny_mqtt_proto_data_t *data;
     data = (atiny_mqtt_proto_data_t *)nc->proto_data;
 	options->subscribe_head.packet_id = getNextPacketId(nc);
+
+    for( i = 0; i < options->subscribe_payload.count; i++)
+    {
+        data->messageHandlers[i].topicFilter = options->subscribe_payload.topic[i];
+        data->messageHandlers[i].cb = cbs[i];
+    }
 
     len = mqtt_encode_subscribe((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options);
     if(len > 0)

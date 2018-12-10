@@ -1,5 +1,6 @@
 
 #include "mqtt_packet.h"
+#include "atiny_config.h"
 
 #define ATINY_EV_MQTT_BASE             0x100
 #define ATINY_EV_MQTT_CONNECT          (ATINY_EV_MQTT_BASE + MQTT_PACKET_TYPE_CONNECT)
@@ -17,9 +18,6 @@
 #define ATINY_EV_MQTT_PINGRESP         (ATINY_EV_MQTT_BASE + MQTT_PACKET_TYPE_PINGRESP)
 #define ATINY_EV_MQTT_DISCONNECT       (ATINY_EV_MQTT_BASE + MQTT_PACKET_TYPE_DISCONNECT)
 
-#define MAX_MESSAGE_HANDLERS (10)
-
-//typedef MQTTPacket_connectData mqtt_pack_con_opt_t;
 
 
 #define MAX_PACKET_ID 0xFFFF
@@ -31,6 +29,8 @@ typedef enum QoS
     QOS2
 } QoS_e;
 
+typedef struct atiny_mqtt_proto_data  atiny_mqtt_proto_data_t;
+
 typedef struct atiny_mqtt_msg
 {
     unsigned char type;
@@ -41,13 +41,8 @@ typedef struct atiny_mqtt_msg
     unsigned short id;
     void *payload;
     size_t payloadlen;
+	atiny_mqtt_proto_data_t *mqtt_data;
 } atiny_mqtt_msg_t;
-
-typedef struct atiny_mqtt_msg_data
-{
-    atiny_mqtt_msg_t* message;
-    const char* topic;
-} atiny_mqtt_msg_data_t;
 
 typedef struct atiny_mqtt_suback_data
 {
@@ -55,7 +50,7 @@ typedef struct atiny_mqtt_suback_data
 } atiny_mqtt_suback_data_t;
 
 
-typedef void (*messageHandler)(atiny_mqtt_msg_data_t*);
+typedef void (*atiny_mqtt_msg_handler)(void *);
 
 typedef struct atiny_mqtt_proto_data
 {
@@ -64,16 +59,17 @@ typedef struct atiny_mqtt_proto_data
     unsigned int next_packetid;
     struct MessageHandlers
     {
+        unsigned char efficient;
         const char* topicFilter;
-        messageHandler fp;
-    } messageHandlers[MAX_MESSAGE_HANDLERS];      /* Message handlers are indexed by subscription topic */
+        atiny_mqtt_msg_handler cb;
+    } messageHandlers[ATINY_MQTT_BUILTIN_NUM];      /* Message handlers are indexed by subscription topic */
 } atiny_mqtt_proto_data_t;
 
 
 int getNextPacketId(atiny_connection_t *nc);
 int atiny_mqtt_connect(atiny_connection_t *nc, mqtt_connect_opt_t *options);
 int atiny_mqtt_publish(atiny_connection_t *nc, mqtt_publish_opt_t *options);
-int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options);
+int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options, atiny_mqtt_msg_handler *cbs);
 int atiny_mqtt_puback(atiny_connection_t *nc, mqtt_puback_opt_t *options);
 int atiny_mqtt_ping(atiny_connection_t *nc);
 void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_data);

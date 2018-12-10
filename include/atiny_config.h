@@ -8,6 +8,9 @@
 
 #define SERVER_IP "127.0.0.1";//"122.112.225.88" //"118.190.136.167";//;//"127.0.0.1";
 
+#define ATINY_MQTT_BUILTIN_NUM (5)
+
+
 #if 1
 #ifdef WITH_DTLS
 #ifndef SERVER_PORT

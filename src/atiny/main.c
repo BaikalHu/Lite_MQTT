@@ -13,6 +13,68 @@
 static atiny_device_info_t default_dev_info;
 extern atiny_if_funcs_t linux_sock;
 
+typedef struct atiny_mqtt_builtin_topic
+{
+    char *topic;
+    QoS_e qos;
+	atiny_mqtt_msg_handler cb;
+} atiny_mqtt_builtin_topic_t;
+
+void dev_message_cb(void *msg)
+{
+    ATINY_LOG(LOG_INFO, "dev_message_cb: %s",(char *)msg);
+}
+
+void twins_message_cb(void *msg)
+{
+
+}
+
+void dev_message_update_cb(void *msg)
+{
+
+}
+
+void twins_message_update_cb(void *msg)
+{
+
+}
+
+void dev_message_handle_cb(void *msg)
+{
+
+}
+
+
+static atiny_mqtt_builtin_topic_t ief_builtin_topic[ATINY_MQTT_BUILTIN_NUM] = 
+{
+    {
+        .topic = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/properties/result",
+        .qos = QOS0,
+        .cb = dev_message_cb,
+    },
+    {
+        .topic = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/twins/result",
+        .qos = QOS0,
+        .cb = twins_message_cb,
+	},
+    {
+        .topic = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/properties/todevice",
+        .qos = QOS0,
+        .cb = dev_message_update_cb,
+    },
+    {
+        .topic = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/twins/expected",
+        .qos = QOS0,
+        .cb = twins_message_update_cb,
+    },
+    {
+        .topic = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/messages/todevice/#",
+        .qos = QOS0,
+        .cb = dev_message_handle_cb,
+    },
+};
+
 void ev_handler(atiny_connection_t *nc, int event, void *event_data)
 {
     ATINY_LOG(LOG_DEBUG, "ev_handler in main");
@@ -41,21 +103,20 @@ void ev_handler(atiny_connection_t *nc, int event, void *event_data)
             {
                 ATINY_LOG(LOG_DEBUG, "mqtt connect succuss");
                 mqtt_subscribe_opt_t sub_options;
-                sub_options.subscribe_payload.count = 5;
-                sub_options.subscribe_payload.topic = (char **)malloc(5);
-                //sub_options.subscribe_payload.topic[0] = "/bj/dcf/33/p";
-                sub_options.subscribe_payload.topic[0] = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/properties/result";
-                sub_options.subscribe_payload.topic[1] = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/twins/result";
-                sub_options.subscribe_payload.topic[2] = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/properties/todevice";
-                sub_options.subscribe_payload.topic[3] = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/twins/expected";
-                sub_options.subscribe_payload.topic[4] = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/messages/todevice/#";
-                //sub_options.subscribe_payload.qoss = (unsigned char *)malloc(2);
-                sub_options.subscribe_payload.qoss[0] = 0;
-                sub_options.subscribe_payload.qoss[1] = 0;
-                sub_options.subscribe_payload.qoss[2] = 0;
-                sub_options.subscribe_payload.qoss[3] = 0;
-                sub_options.subscribe_payload.qoss[4] = 0;
-                atiny_mqtt_subscribe(nc, &sub_options);
+                sub_options.subscribe_payload.count = ATINY_MQTT_BUILTIN_NUM;
+                sub_options.subscribe_payload.topic = (char **)malloc(ATINY_MQTT_BUILTIN_NUM);
+                sub_options.subscribe_payload.topic[0] = ief_builtin_topic[0].topic;
+                sub_options.subscribe_payload.topic[1] = ief_builtin_topic[1].topic;
+                sub_options.subscribe_payload.topic[2] = ief_builtin_topic[2].topic;
+                sub_options.subscribe_payload.topic[3] = ief_builtin_topic[3].topic;
+                sub_options.subscribe_payload.topic[4] = ief_builtin_topic[4].topic;
+                sub_options.subscribe_payload.qoss[0] = ief_builtin_topic[0].qos;
+                sub_options.subscribe_payload.qoss[1] = ief_builtin_topic[1].qos;
+                sub_options.subscribe_payload.qoss[2] = ief_builtin_topic[2].qos;
+                sub_options.subscribe_payload.qoss[3] = ief_builtin_topic[3].qos;
+                sub_options.subscribe_payload.qoss[4] = ief_builtin_topic[4].qos;
+				atiny_mqtt_msg_handler cbs[ATINY_MQTT_BUILTIN_NUM] = {ief_builtin_topic[0].cb, ief_builtin_topic[1].cb, ief_builtin_topic[2].cb, ief_builtin_topic[3].cb, ief_builtin_topic[4].cb};
+                atiny_mqtt_subscribe(nc, &sub_options, cbs);
 
                 mqtt_publish_opt_t options;
                 options.publish_head.topic = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/properties";
