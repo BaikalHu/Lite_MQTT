@@ -3,15 +3,18 @@
 
 #include <stddef.h>
 
+#define ATINY_EVENTS_HANDLE_PERIOD_MS (1*1000)
+#define ATINY_RECONN_MAX_TIMES        (5)
+
 #define ATINY_SEND_BUF_SIZE      (1024)
 #define ATINY_RECV_BUF_SIZE      (1024)
 
-#define SERVER_IP "127.0.0.1";//"122.112.225.88" //"118.190.136.167";//;//"127.0.0.1";
+#define SERVER_IP "122.112.225.88" //"118.190.136.167";//;//"127.0.0.1";
 
 #define ATINY_MQTT_BUILTIN_NUM (5)
 
 
-#if 1
+#if 0
 #ifdef WITH_DTLS
 #ifndef SERVER_PORT
 #define SERVER_PORT (8883)
@@ -121,7 +124,7 @@ extern const size_t mqtt_test_cli_key_len;
 #endif
 
 
-#if 0
+#if 1
 #ifdef WITH_DTLS
 
 #define AGENT_TINY_PROJECT_ID "cb1d33433e2648b0a0f40ad1a0c5ffbb"

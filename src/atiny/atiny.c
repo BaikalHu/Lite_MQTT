@@ -44,15 +44,9 @@ void atiny_init(atiny_manager_t *m, atiny_device_info_t *param)
     m->interface->ifuncs->init(m->interface);
 }
 
-atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb)
+atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param)
 {
-  atiny_connect_param_t params;
-  memset(&params, 0, sizeof(params));
-  return atiny_connect_with_param(m, cb, params);
-}
-
-atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param)
-{
+    int ret;
     atiny_connection_t *nc = NULL;
     if((nc = (atiny_connection_t *)atiny_malloc(sizeof(atiny_connection_t))) != NULL)
     {
@@ -78,7 +72,14 @@ atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_han
         return nc;
 
 #ifdef WITH_DTLS
-    atiny_ssl_init(nc, &param.ssl_param);
+    ret = atiny_ssl_init(nc, &param.ssl_param);
+    if(ret != 0)
+    {
+        atiny_buf_free(&(nc->send_buf));
+        atiny_buf_free(&(nc->recv_buf));
+        atiny_free(nc);
+        return NULL;
+    }
 #endif
 
     m->interface->ifuncs->connect(nc);

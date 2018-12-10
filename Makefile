@@ -51,7 +51,7 @@ BUILD_DIR = build
 ######################################
 # C sources
 
-WITH_DTLS := no
+WITH_DTLS := yes
 
 # macros for gcc
 # AS defines
@@ -67,7 +67,6 @@ C_DEFS +=  \
         -D DEBUG \
         -D USE_MBED_TLS \
         -D WITH_DTLS  \
-        -D MBEDTLS_DEBUG_C \
         -D MBEDTLS_CONFIG_FILE=\"atiny_mbedtls_config_x509.h\" \
         -D LWIP_TIMEVAL_PRIVATE=0
 

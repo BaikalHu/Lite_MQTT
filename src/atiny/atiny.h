@@ -24,6 +24,9 @@
 #define ATINY_FG_CAN_WR (1 << 3)
 #define ATINY_FG_ERR    (1 << 4)
 
+#define ATINY_FG_RECONNECT  (1 << 5)
+
+
 #define ATINY_EV_POLL       1
 #define ATINY_EV_CONNECTED  2
 #define ATINY_EV_SEND       3
@@ -138,8 +141,7 @@ void atiny_register_proto(atiny_connection_t *nc, atiny_event_handler proto_hand
 
 
 void atiny_init(atiny_manager_t *m,  atiny_device_info_t *param);
-atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb);
-atiny_connection_t* atiny_connect_with_param(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param);
+atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param);
 void atiny_poll(atiny_manager_t *m, int timeout_ms);
 
 

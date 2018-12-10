@@ -27,22 +27,22 @@ void dev_message_cb(void *msg)
 
 void twins_message_cb(void *msg)
 {
-
+    ATINY_LOG(LOG_INFO, "twins_message_cb: %s",(char *)msg);
 }
 
 void dev_message_update_cb(void *msg)
 {
-
+    ATINY_LOG(LOG_INFO, "dev_message_update_cb: %s",(char *)msg);
 }
 
 void twins_message_update_cb(void *msg)
 {
-
+    ATINY_LOG(LOG_INFO, "twins_message_update_cb: %s",(char *)msg);
 }
 
 void dev_message_handle_cb(void *msg)
 {
-
+    ATINY_LOG(LOG_INFO, "dev_message_handle_cb: %s",(char *)msg);
 }
 
 
@@ -143,7 +143,7 @@ void ev_handler(atiny_connection_t *nc, int event, void *event_data)
             break;
         case ATINY_EV_MQTT_PUBLISH:
             {
-                ATINY_LOG(LOG_INFO, "recv pushlish %s", (char *)amm->payload);
+                ATINY_LOG(LOG_DEBUG, "recv pushlish %s", (char *)amm->payload);
                 int len = 0;
                 mqtt_puback_opt_t options;
 
@@ -188,12 +188,12 @@ int main()
 #endif
 
     default_dev_info.ifuncs = &linux_sock;
-    
+
     atiny_init(&mgr, &default_dev_info);
 
-    atiny_connect_with_param(&mgr, ev_handler, param);
+    atiny_connect(&mgr, ev_handler, param);
     for(;;)
     {
-        atiny_poll(&mgr, 1000);
+        atiny_poll(&mgr, ATINY_EVENTS_HANDLE_PERIOD_MS);
     }
 }

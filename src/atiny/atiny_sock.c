@@ -57,18 +57,25 @@ void atiny_dispatch_event(atiny_connection_t *nc, atiny_event_handler event_hand
 
 void atiny_nc_connect_cb(atiny_connection_t *nc)
 {
+    int ret = 0;
     ATINY_LOG(LOG_DEBUG, "atiny_nc_connect_cb");
     nc->flags &= ~ATINY_FG_CONNECTING;
 #if WITH_DTLS
-//if (err == 0 && (nc->flags & MG_F_SSL)) {
-    atiny_ssl_handshake(nc);
-//  } else
+    ret = atiny_ssl_handshake(nc);
+    if(ret == 0)
+    {
+        nc->flags &= ~(ATINY_FG_CAN_RD | ATINY_FG_CAN_WR);
+    }
+    else if(ret == MBEDTLS_ERR_SSL_WANT_READ)
+        nc->flags |= ATINY_FG_CAN_RD;
+    else if(ret == MBEDTLS_ERR_SSL_WANT_WRITE)
+        nc->flags |= ATINY_FG_CAN_WR;
 #endif
 
     atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_CONNECTED,NULL);
 }
 
-int atiny_nc_can_write_cb(atiny_connection_t *nc)
+void atiny_nc_can_write_cb(atiny_connection_t *nc)
 {
     int rc = 0;
     const unsigned char *buf = nc->send_buf.data;
@@ -77,25 +84,30 @@ int atiny_nc_can_write_cb(atiny_connection_t *nc)
 
     nc->flags &= ~ATINY_FG_CAN_WR;
 #if WITH_DTLS
-    if(len > 0)	  rc = mbedtls_ssl_write(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl,  buf, len);
+    if(len > 0)
+        rc = mbedtls_ssl_write(((atiny_ssl_ctx_t *)nc->ssl_handler)->ssl,  buf, len);
 
     if (rc == MBEDTLS_ERR_SSL_WANT_WRITE)
     {
-        return 0;
+        nc->flags |= ATINY_FG_CAN_WR;
     }
     else if (rc < 0)
     {
-        return -1;
+        nc->flags |= ATINY_FG_RECONNECT;
+    }
+    else
+    {
+        nc->flags &= ~ATINY_FG_CAN_WR;
     }
 #else
     if(len > 0)
         rc = nc->mgr->interface->ifuncs->send(nc, buf, len);
 #endif
 
-
     if(rc < 0)
     {
         ATINY_LOG(LOG_ERR, "atiny write error");
+        nc->flags |= ATINY_FG_RECONNECT;
     }
     else if(rc > 0)
     {
@@ -105,11 +117,9 @@ int atiny_nc_can_write_cb(atiny_connection_t *nc)
         nc->send_buf.len -= rc;
     }
     atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_SEND, NULL);
-
-    return rc;
 }
 
-int atiny_nc_can_read_cb(atiny_connection_t *nc)
+void atiny_nc_can_read_cb(atiny_connection_t *nc)
 {
     int rc = 0;
     unsigned char *buf = nc->recv_buf.data + nc->recv_buf.len;
@@ -123,11 +133,15 @@ int atiny_nc_can_read_cb(atiny_connection_t *nc)
 
     if (rc == MBEDTLS_ERR_SSL_WANT_READ)
     {
-        return 0;
+        nc->flags |= ATINY_FG_CAN_RD;
     }
     else if (rc < 0)
     {
-        return -1;
+        nc->flags |= ATINY_FG_RECONNECT;
+    }
+    else
+    {
+        nc->flags &= ~ATINY_FG_CAN_RD;
     }
 #else
     if(len > 0)
@@ -137,8 +151,7 @@ int atiny_nc_can_read_cb(atiny_connection_t *nc)
     if(rc< 0)
     {
         ATINY_LOG(LOG_ERR, "read error");
-        //TODO
-        //should close the connection
+		nc->flags |= ATINY_FG_RECONNECT;
     }
     else if(rc > 0)
     {
@@ -146,15 +159,12 @@ int atiny_nc_can_read_cb(atiny_connection_t *nc)
         nc->recv_buf.len += rc;
         atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_RECV, NULL);
     }
-    return rc;
 }
 
-static int atiny_nc_poll_cb(atiny_connection_t *nc)
+static void atiny_nc_poll_cb(atiny_connection_t *nc)
 {
     unsigned long int now = atiny_gettime_ms();
     atiny_dispatch_event(nc, NULL, NULL, ATINY_EV_POLL, &now);
-
-    return 0;
 }
 
 static void atiny_mgr_handle_conn(atiny_connection_t *nc)
