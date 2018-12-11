@@ -141,6 +141,23 @@ typedef struct mqtt_subscribe_opt
 	mqtt_subscribe_payload_t subscribe_payload;
 } mqtt_subscribe_opt_t;
 
+typedef struct mqtt_unsubscribe_head
+{
+    unsigned short packet_id;
+} mqtt_unsubscribe_head_t;
+
+typedef struct mqtt_unsubscribe_payload
+{
+    unsigned char count;
+    char **topic;
+} mqtt_unsubscribe_payload_t;
+
+typedef struct mqtt_unsubscribe_opt
+{
+    mqtt_unsubscribe_head_t unsubscribe_head;
+    mqtt_unsubscribe_payload_t unsubscribe_payload;
+} mqtt_unsubscribe_opt_t;
+
 typedef struct mqtt_suback_head
 {
     unsigned short packet_id;
@@ -202,5 +219,7 @@ int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *opt
 int mqtt_decode_suback(unsigned char *buf, int buf_len, mqtt_suback_opt_t *options);
 
 int mqtt_encode_puback(unsigned char *buf, int buf_len, mqtt_puback_opt_t *options);
+
+int mqtt_encode_unsubscribe(unsigned char *buf, int buf_len, mqtt_unsubscribe_opt_t *options);
 
 #endif

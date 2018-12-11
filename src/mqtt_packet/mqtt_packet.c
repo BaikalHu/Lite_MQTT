@@ -248,7 +248,7 @@ int mqtt_encode_subscribe(unsigned char *buf, int buf_len, mqtt_subscribe_opt_t 
     {
         remaining_len += MQTT_STRING_LEN + MQTT_QOS_LEN + (int)strlen(options->subscribe_payload.topic[i]);
 	}
-	
+
     /* Encode fix header */
     len = mqtt_encode_fixhead(buf, MQTT_PACKET_TYPE_SUBSCRIBE, 0, 0, 0, remaining_len);
 	/* Encode variable header */
@@ -304,6 +304,37 @@ int mqtt_encode_puback(unsigned char *buf, int buf_len, mqtt_puback_opt_t *optio
 	vhead_buf += mqtt_encode_num(vhead_buf, options->puback_head.packet_id);
 	return (len + remaining_len);
 }
+
+int mqtt_encode_unsubscribe(unsigned char *buf, int buf_len, mqtt_unsubscribe_opt_t *options)
+{
+    int len = 0;
+    int remaining_len = 0;
+    unsigned char *vhead_buf;
+    unsigned char *payload_buf;
+
+    remaining_len += sizeof(options->unsubscribe_head);
+
+	for(int i = 0; i < options->unsubscribe_payload.count; i++)
+    {
+        remaining_len += MQTT_STRING_LEN + (int)strlen(options->unsubscribe_payload.topic[i]);
+	}
+
+    /* Encode fix header */
+    len = mqtt_encode_fixhead(buf, MQTT_PACKET_TYPE_UNSUBSCRIBE, 0, 0, 0, remaining_len);
+	/* Encode variable header */
+	vhead_buf = buf + len;
+	vhead_buf += mqtt_encode_num(vhead_buf, options->unsubscribe_head.packet_id);
+
+	/* Encode payload*/
+	payload_buf = vhead_buf;
+	for(int i = 0; i < options->unsubscribe_payload.count; i++)
+    {
+        payload_buf += mqtt_encode_string(payload_buf, options->unsubscribe_payload.topic[i]);
+	}
+
+    return (len + remaining_len);
+}
+
 
 int mqtt_encode_ping(unsigned char *buf, int buf_len)
 {

@@ -139,6 +139,12 @@ void ev_handler(atiny_connection_t *nc, int event, void *event_data)
                 options.qos = 1;
                 options.retain = 0;
                 atiny_mqtt_publish(nc, &options);
+
+                mqtt_unsubscribe_opt_t unsub_options;
+                unsub_options.unsubscribe_payload.count = 1;
+                unsub_options.unsubscribe_payload.topic = (char **)malloc(1);
+                unsub_options.unsubscribe_payload.topic[0] = AGENT_TINY_PROJECT_ID"/device/"AGENT_TINY_DEVICE_ID"/properties/result";
+                atiny_mqtt_unsubscribe(nc, &unsub_options);
             }
             break;
         case ATINY_EV_MQTT_PUBLISH:

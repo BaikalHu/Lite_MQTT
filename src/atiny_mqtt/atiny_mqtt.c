@@ -203,8 +203,19 @@ int atiny_mqtt_puback(atiny_connection_t *nc, mqtt_puback_opt_t *options)
     data->last_time = atiny_gettime_ms();
 
     return len;
-
-
-
 }
 
+int atiny_mqtt_unsubscribe(atiny_connection_t *nc, mqtt_unsubscribe_opt_t *options)
+{
+    int len = 0;
+    atiny_mqtt_proto_data_t *data;
+    data = (atiny_mqtt_proto_data_t *)nc->proto_data;
+	options->unsubscribe_head.packet_id = getNextPacketId(nc);
+
+    len = mqtt_encode_unsubscribe((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options);
+    if(len > 0)
+        nc->send_buf.len += len;
+    data->last_time = atiny_gettime_ms();
+
+    return len;
+}

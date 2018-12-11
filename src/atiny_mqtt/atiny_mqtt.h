@@ -72,4 +72,5 @@ int atiny_mqtt_publish(atiny_connection_t *nc, mqtt_publish_opt_t *options);
 int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options, atiny_mqtt_msg_handler *cbs);
 int atiny_mqtt_puback(atiny_connection_t *nc, mqtt_puback_opt_t *options);
 int atiny_mqtt_ping(atiny_connection_t *nc);
+int atiny_mqtt_unsubscribe(atiny_connection_t *nc, mqtt_unsubscribe_opt_t *options);
 void atiny_mqtt_event_handler(atiny_connection_t *nc, int event, void *event_data);
