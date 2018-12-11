@@ -4,7 +4,7 @@
 #include "atiny_log.h"
 #include "atiny_mqtt.h"
 
-int getNextPacketId(atiny_connection_t *nc)
+int atiny_mqtt_packetid(atiny_connection_t *nc)
 {
     atiny_mqtt_proto_data_t *pd = (atiny_mqtt_proto_data_t *)nc->proto_data;
     return pd->next_packetid = (pd->next_packetid == MAX_PACKET_ID) ? 1 : pd->next_packetid + 1;
@@ -158,8 +158,8 @@ int atiny_mqtt_publish(atiny_connection_t *nc, mqtt_publish_opt_t *options)
     atiny_mqtt_proto_data_t *data;
     data = (atiny_mqtt_proto_data_t *)nc->proto_data;
 
-	if(options->qos)
-		options->publish_head.packet_id = getNextPacketId(nc);
+    if(options->qos)
+        options->publish_head.packet_id = atiny_mqtt_packetid(nc);
     len = mqtt_encode_publish((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options);
     if(len > 0)
         nc->send_buf.len += len;
@@ -174,7 +174,7 @@ int atiny_mqtt_subscribe(atiny_connection_t *nc, mqtt_subscribe_opt_t *options, 
     int i = 0;
     atiny_mqtt_proto_data_t *data;
     data = (atiny_mqtt_proto_data_t *)nc->proto_data;
-	options->subscribe_head.packet_id = getNextPacketId(nc);
+    options->subscribe_head.packet_id = atiny_mqtt_packetid(nc);
 
     for( i = 0; i < options->subscribe_payload.count; i++)
     {
@@ -195,7 +195,7 @@ int atiny_mqtt_puback(atiny_connection_t *nc, mqtt_puback_opt_t *options)
     int len = 0;
     atiny_mqtt_proto_data_t *data;
     data = (atiny_mqtt_proto_data_t *)nc->proto_data;
-	options->puback_head.packet_id = getNextPacketId(nc);
+    options->puback_head.packet_id = atiny_mqtt_packetid(nc);
 
     len = mqtt_encode_puback((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options);
     if(len > 0)
@@ -210,7 +210,7 @@ int atiny_mqtt_unsubscribe(atiny_connection_t *nc, mqtt_unsubscribe_opt_t *optio
     int len = 0;
     atiny_mqtt_proto_data_t *data;
     data = (atiny_mqtt_proto_data_t *)nc->proto_data;
-	options->unsubscribe_head.packet_id = getNextPacketId(nc);
+    options->unsubscribe_head.packet_id = atiny_mqtt_packetid(nc);
 
     len = mqtt_encode_unsubscribe((nc->send_buf.data + nc->send_buf.len), (nc->send_buf.size - nc->send_buf.len), options);
     if(len > 0)

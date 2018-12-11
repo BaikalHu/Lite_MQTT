@@ -194,9 +194,11 @@ int atiny_ssl_send( void *ctx, const unsigned char *buf, size_t len)
 {
     int ret;
     atiny_connection_t *nc = (atiny_connection_t *)ctx;
-	ret = nc->mgr->interface->ifuncs->send(nc, buf, len);
-	if(ret > 0) return ret;
-	if(ret == 0) return MBEDTLS_ERR_SSL_WANT_WRITE;
+    ret = nc->mgr->interface->ifuncs->send(nc, buf, len);
+    if(ret > 0)
+        return ret;
+    if(ret == 0)
+        return MBEDTLS_ERR_SSL_WANT_WRITE;
 	return MBEDTLS_ERR_NET_SEND_FAILED;
 }
 
@@ -204,10 +206,12 @@ int atiny_ssl_recv( void *ctx, unsigned char *buf, size_t len)
 {
     int ret;
     atiny_connection_t *nc = (atiny_connection_t *)ctx;
-	ret = nc->mgr->interface->ifuncs->recv(nc, buf, len);
-	if(ret > 0) return ret;
-	if(ret == 0) return MBEDTLS_ERR_SSL_WANT_READ;
-	return MBEDTLS_ERR_NET_RECV_FAILED;
+    ret = nc->mgr->interface->ifuncs->recv(nc, buf, len);
+    if(ret > 0)
+        return ret;
+    if(ret == 0)
+        return MBEDTLS_ERR_SSL_WANT_READ;
+    return MBEDTLS_ERR_NET_RECV_FAILED;
 }
 
 
