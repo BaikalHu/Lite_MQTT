@@ -8,7 +8,7 @@
 
 3.在include/atiny_config.h中配置AGENT_TINY_PROJECT_ID和AGENT_TINY_DEVICE_ID。这两项配置可以查看private_cert.crt中：
 
-![](./doc/produceid.png)
+![](./produceid.png)
 
 其中：“.”之前的字串为AGENT_TINY_PROJECT_ID，"."之后的字串为AGENT_TINY_DEVICE_ID。
 
