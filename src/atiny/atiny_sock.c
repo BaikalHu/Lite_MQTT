@@ -57,6 +57,10 @@ void atiny_dispatch_event(atiny_connection_t *nc, atiny_event_handler event_hand
 
 void atiny_nc_connect_cb(atiny_connection_t *nc)
 {
+#if WITH_DTLS
+    int ret;
+#endif
+
     ATINY_LOG(LOG_DEBUG, "atiny_nc_connect_cb");
     nc->flags &= ~ATINY_FG_CONNECTING;
 #if WITH_DTLS

@@ -35,6 +35,22 @@ typedef enum mqtt_packet_type
     MQTT_PACKET_TYPE_MAX         = 15, 
 } mqtt_packet_type_e; 
 
+
+#define MQTT_PROTO_NAME_LEN      (2)
+#define MQTT_PROTO_NAME_SIZE     (4)
+#define MQTT_PROTO_LEVEL         (4)
+
+#define MQTT_STRING_LEN          (2)
+#define MQTT_DATA_LEN            (2)
+#define MQTT_QOS_LEN             (1)
+
+#define MQTT_CONNECT_HEAD_INIT               \
+    {{0, MQTT_PROTO_NAME_SIZE}, {'M', 'Q', 'T', 'T'}, \
+        MQTT_PROTO_LEVEL, {0}, 0}
+
+#define MQTT_CONNECT_OPT_INIT {{{0, MQTT_PROTO_NAME_SIZE}, {'M', 'Q', 'T', 'T'}, \
+        MQTT_PROTO_LEVEL, {0}, 0}, {NULL, NULL, NULL, NULL, NULL}}
+
 typedef struct mqtt_fix_head
 {
     union
@@ -50,18 +66,6 @@ typedef struct mqtt_fix_head
     } mqtt_first_byte_u;
     unsigned char remaining_len[MQTT_PACKET_MAX_LEN];
 } mqtt_fix_head_t;
-
-#define MQTT_PROTO_NAME_LEN      (2)
-#define MQTT_PROTO_NAME_SIZE     (4)
-#define MQTT_PROTO_LEVEL         (4)
-
-#define MQTT_STRING_LEN          (2)
-#define MQTT_DATA_LEN            (2)
-#define MQTT_QOS_LEN             (1)
-
-#define MQTT_CONNECT_HEAD_INIT               \
-    {{0, MQTT_PROTO_NAME_SIZE}, {'M', 'Q', 'T', 'T'}, \
-        MQTT_PROTO_LEVEL, {0}, 0}
 
 typedef struct mqtt_connect_head
 {
@@ -103,21 +107,21 @@ typedef struct mqtt_connect_opt
 typedef struct mqtt_publish_head
 {
     char *topic;
-	unsigned short topic_len;
-	unsigned short packet_id;
+    unsigned short topic_len;
+    unsigned short packet_id;
 } mqtt_publish_head_t;
 
 typedef struct mqtt_publish_payload
 {
     char *msg;
-	size_t msg_len;
+    size_t msg_len;
 } mqtt_publish_payload_t;
 
 
 typedef struct mqtt_publish_opt
 {
     mqtt_publish_head_t publish_head;
-	mqtt_publish_payload_t publish_payload;
+    mqtt_publish_payload_t publish_payload;
     unsigned char dup;
     unsigned char qos;
     unsigned char retain;
@@ -132,13 +136,13 @@ typedef struct mqtt_subscribe_payload
 {
     unsigned char count;
     char **topic;
-	unsigned char qoss[0];
+    unsigned char qoss[0];
 } mqtt_subscribe_payload_t;
 
 typedef struct mqtt_subscribe_opt
 {
-	mqtt_subscribe_head_t subscribe_head;
-	mqtt_subscribe_payload_t subscribe_payload;
+    mqtt_subscribe_head_t subscribe_head;
+    mqtt_subscribe_payload_t subscribe_payload;
 } mqtt_subscribe_opt_t;
 
 typedef struct mqtt_unsubscribe_head
@@ -193,33 +197,18 @@ typedef struct mqtt_puback_opt
 } mqtt_puback_opt_t;
 
 
-#define MQTT_CONNECT_OPT_INIT {{{0, MQTT_PROTO_NAME_SIZE}, {'M', 'Q', 'T', 'T'}, \
-        MQTT_PROTO_LEVEL, {0}, 0}, {NULL, NULL, NULL, NULL, NULL}}
 
-
-//int mqtt_encode_len(unsigned char *buf, int len);
-
-
-int mqtt_encode_fixhead(unsigned char *buf, unsigned char type, unsigned char dup, 
+int mqtt_encode_fixhead(unsigned char *buf, unsigned char type, unsigned char dup,
                                 unsigned char qos, unsigned char retain, int remaining_len);
-
 int mqtt_encode_connect(unsigned char *buf, int buf_len, mqtt_connect_opt_t *options);
-
 int mqtt_encode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *options);
 int mqtt_encode_subscribe(unsigned char *buf, int buf_len, mqtt_subscribe_opt_t *options);
-
 int mqtt_encode_ping(unsigned char *buf, int buf_len);
-
-
-int mqtt_decode_fixhead(unsigned char *buf, unsigned char *type, unsigned char *dup, 
+int mqtt_decode_fixhead(unsigned char *buf, unsigned char *type, unsigned char *dup,
                                 unsigned char *qos, unsigned char *retain, int *remaining_len);
-
-
 int mqtt_decode_publish(unsigned char *buf, int buf_len, mqtt_publish_opt_t *options);
 int mqtt_decode_suback(unsigned char *buf, int buf_len, mqtt_suback_opt_t *options);
-
 int mqtt_encode_puback(unsigned char *buf, int buf_len, mqtt_puback_opt_t *options);
-
 int mqtt_encode_unsubscribe(unsigned char *buf, int buf_len, mqtt_unsubscribe_opt_t *options);
 
 #endif
