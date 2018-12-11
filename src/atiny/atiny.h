@@ -13,9 +13,6 @@
 #include <netdb.h>
 #include <errno.h>
 
-//#ifdef WITH_DTLS
-//#include "atiny_mbed_ssl.h"
-//#endif
 
 #define ATINY_FG_UDP (1 << 0)
 #define ATINY_FG_CONNECTING (1 << 1)
@@ -93,8 +90,6 @@ typedef struct atiny_if_funcs
 
 typedef struct atiny_device_info
 {
-//    char *server_ip;
-//    unsigned int server_port;
     atiny_if_funcs_t *ifuncs;
 } atiny_device_info_t;
 
@@ -130,7 +125,6 @@ typedef struct atiny_connect_param
     int proto_type;
     char *server_ip;
     unsigned int server_port;
-//    atiny_if_funcs_t *ifuncs;
 #ifdef WITH_DTLS
     // add some param used in dtls, like ca, key etc.
 	atiny_ssl_param_u ssl_param;

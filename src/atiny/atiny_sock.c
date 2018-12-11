@@ -57,7 +57,6 @@ void atiny_dispatch_event(atiny_connection_t *nc, atiny_event_handler event_hand
 
 void atiny_nc_connect_cb(atiny_connection_t *nc)
 {
-    int ret = 0;
     ATINY_LOG(LOG_DEBUG, "atiny_nc_connect_cb");
     nc->flags &= ~ATINY_FG_CONNECTING;
 #if WITH_DTLS
@@ -275,6 +274,7 @@ int atiny_sock_send(atiny_connection_t *nc, const void *buf, size_t len)
     int rc;
 
     rc = send(nc->sock_fd, buf, len, 0);
+    ATINY_LOG(LOG_DEBUG, "sock send len:%d", rc);
 
     return rc;
 }
@@ -282,9 +282,10 @@ int atiny_sock_send(atiny_connection_t *nc, const void *buf, size_t len)
 int atiny_sock_recv(atiny_connection_t *nc, void *buf, size_t len)
 {
     int rc;
-	
+
     rc = recv(nc->sock_fd, buf, len, 0);
 	ATINY_LOG(LOG_DEBUG, "sock recv len:%d", rc);
+
     return rc;
 }
 

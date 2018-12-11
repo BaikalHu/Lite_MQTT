@@ -46,7 +46,9 @@ void atiny_init(atiny_manager_t *m, atiny_device_info_t *param)
 
 atiny_connection_t* atiny_connect(atiny_manager_t *m, atiny_event_handler cb, atiny_connect_param_t param)
 {
+#ifdef WITH_DTLS
     int ret;
+#endif
     atiny_connection_t *nc = NULL;
     if((nc = (atiny_connection_t *)atiny_malloc(sizeof(atiny_connection_t))) != NULL)
     {
